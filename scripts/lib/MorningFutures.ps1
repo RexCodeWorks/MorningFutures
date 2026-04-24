@@ -213,7 +213,7 @@ function New-DefaultConfig {
         UniverseSize = 15
         TopPicks = 3
         MinQuoteVolumeUsd = 30000000
-        KlineLookbackHours = 36
+        KlineLookbackHours = 72
         PreferredSymbols = @(
             "BTC-USDT-SWAP",
             "ETH-USDT-SWAP",
@@ -623,8 +623,8 @@ function Get-MarketContext {
     $newsScore = Get-Average -Values @($NewsItems | ForEach-Object { $_.sentimentScore })
     $fearScore = if ($null -ne $fearValue) { Normalize-Number -Value ($fearValue - 50) -Scale 20 } else { 0 }
     $breadthScore = Normalize-Number -Value ($breadthPct - 50) -Scale 20
-    $btcScore = Normalize-Number -Value $btcChange -Scale 4
-    $ethScore = Normalize-Number -Value $ethChange -Scale 5
+    $btcScore = Normalize-Number -Value $btcChange -Scale 8
+    $ethScore = Normalize-Number -Value $ethChange -Scale 10
 
     $regimeScore = (0.25 * $btcScore) + (0.20 * $ethScore) + (0.20 * $breadthScore) + (0.20 * $fearScore) + (0.15 * $newsScore)
 
@@ -714,12 +714,19 @@ function New-ScoreFromMetrics {
     $momentum = (0.45 * (Normalize-Number -Value $Change6hPct -Scale 4)) +
         (0.35 * (Normalize-Number -Value $Change24hPct -Scale 8)) +
         (0.20 * (Normalize-Number -Value $Change3hPct -Scale 2))
-    $trend = Normalize-Number -Value (($TrendWinRate - 0.5) * 2) -Scale 1
+    $trend = Normalize-Number -Value $TrendWinRate -Scale 1
     $volume = Normalize-Number -Value ($VolumeRatio - 1) -Scale 1.25
     $volatility = Normalize-Number -Value $VolatilityPct -Scale 3.5
     $longCrowdingRelief = Normalize-Number -Value (-1 * $FundingRatePct) -Scale 0.04
     $shortCrowdingRelief = Normalize-Number -Value $FundingRatePct -Scale 0.04
-    $bollingerPositionScore = Clamp-Number -Value $BollingerPosition -Minimum -1 -Maximum 1
+    $overextendedLong = if ($Change6hPct -gt 5) { 0.5 } else { 1.0 }
+    $overextendedShort = if ($Change6hPct -lt -5) { 0.5 } else { 1.0 }
+    $bollingerPositionScore = if ($BollingerPosition -ge 0) {
+        (Clamp-Number -Value $BollingerPosition -Minimum -1 -Maximum 1) * $overextendedLong
+    }
+    else {
+        (Clamp-Number -Value $BollingerPosition -Minimum -1 -Maximum 1) * $overextendedShort
+    }
     $bollingerBasisSlope = Normalize-Number -Value $BollingerBasisSlopePct -Scale 1.2
     $bollingerExpansion = Normalize-Number -Value ($BollingerWidthRatio - 1) -Scale 0.6
 
@@ -828,17 +835,18 @@ function Get-SymbolSnapshot {
     $change6hPct = Get-PercentChange -BaseValue ([double]$candles[$candles.Count - 7].Close) -CurrentValue $lastPrice
     $change24hPct = Get-PercentChange -BaseValue ([double]$candles[$candles.Count - 25].Close) -CurrentValue $lastPrice
 
-    $greenCloses = 0
-    for ($index = 1; $index -lt $candles.Count; $index++) {
-        if ([double]$candles[$index].Close -ge [double]$candles[$index - 1].Close) {
-            $greenCloses += 1
-        }
-    }
-
-    $trendWinRate = $greenCloses / [double]($candles.Count - 1)
-
     $recentCandles = Get-LastItems -Items $candles -Count 6
-    $baselineCandles = Get-WindowBeforeTail -Items $candles -TailCount 6 -WindowSize 18
+    $recent6Closes = @($recentCandles | ForEach-Object { $_.Close })
+    $prior6Candles = Get-WindowBeforeTail -Items $candles -TailCount 6 -WindowSize 6
+    $prior6Closes = @($prior6Candles | ForEach-Object { $_.Close })
+    $recent6Avg = Get-Average -Values $recent6Closes
+    $prior6Avg = Get-Average -Values $prior6Closes
+    if ($prior6Avg -eq 0) {
+        $prior6Avg = 1
+    }
+    $trendWinRate = Clamp-Number -Value (($recent6Avg - $prior6Avg) / [Math]::Abs($prior6Avg)) -Minimum -1 -Maximum 1
+
+    $baselineCandles = Get-WindowBeforeTail -Items $candles -TailCount 6 -WindowSize 30
     $recentVolume = Get-Average -Values @($recentCandles | ForEach-Object { $_.QuoteVolume })
     $baselineVolume = Get-Average -Values @($baselineCandles | ForEach-Object { $_.QuoteVolume })
     $volumeRatio = if ($baselineVolume -gt 0) { $recentVolume / $baselineVolume } else { 1 }
@@ -916,8 +924,8 @@ function Get-SymbolSnapshot {
     if ($volumeRatio -ge 1.25) {
         $longReasons.Add(("quote volume is {0:N2}x above its recent baseline" -f $volumeRatio))
     }
-    if ($trendWinRate -ge 0.63) {
-        $longReasons.Add(("hourly closes stayed positive {0:P0} of the time" -f $trendWinRate))
+    if ($trendWinRate -ge 0.01) {
+        $longReasons.Add(("recent 6h average price is {0} versus the prior 6h average" -f (Format-SignedPercent -Value ($trendWinRate * 100) -Digits 2)))
     }
     if ($fundingRatePct -le -0.01) {
         $longReasons.Add(("funding at {0} suggests short crowding" -f (Format-SignedPercent -Value $fundingRatePct -Digits 3)))
@@ -942,8 +950,8 @@ function Get-SymbolSnapshot {
     if ($volumeRatio -ge 1.25) {
         $shortReasons.Add(("selling pressure is active with {0:N2}x baseline volume" -f $volumeRatio))
     }
-    if ($trendWinRate -le 0.42) {
-        $shortReasons.Add(("hourly closes were green only {0:P0} of the time" -f $trendWinRate))
+    if ($trendWinRate -le -0.01) {
+        $shortReasons.Add(("recent 6h average price is {0} versus the prior 6h average" -f (Format-SignedPercent -Value ($trendWinRate * 100) -Digits 2)))
     }
     if ($fundingRatePct -ge 0.01) {
         $shortReasons.Add(("funding at {0} hints that longs are still crowded" -f (Format-SignedPercent -Value $fundingRatePct -Digits 3)))
@@ -1240,8 +1248,8 @@ function New-MorningFuturesReport {
     }
 
     $topPicks = [int]$Config.TopPicks
-    $minimumBiasScore = 55
-    $minimumDirectionalEdge = 5
+    $minimumBiasScore = 60
+    $minimumDirectionalEdge = 10
     $longSnapshots = @(
         $snapshots |
         Sort-Object `

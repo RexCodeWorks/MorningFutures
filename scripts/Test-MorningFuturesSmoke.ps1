@@ -7,7 +7,7 @@ $bullish = New-ScoreFromMetrics `
     -Change3hPct 1.9 `
     -Change6hPct 3.8 `
     -Change24hPct 7.2 `
-    -TrendWinRate 0.72 `
+    -TrendWinRate 0.025 `
     -VolumeRatio 1.6 `
     -FundingRatePct -0.015 `
     -VolatilityPct 2.3 `
@@ -28,7 +28,7 @@ $bearish = New-ScoreFromMetrics `
     -Change3hPct -1.4 `
     -Change6hPct -3.1 `
     -Change24hPct -6.4 `
-    -TrendWinRate 0.31 `
+    -TrendWinRate -0.022 `
     -VolumeRatio 1.5 `
     -FundingRatePct 0.018 `
     -VolatilityPct 2.1 `

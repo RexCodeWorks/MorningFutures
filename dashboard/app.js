@@ -5,7 +5,7 @@ window.__MORNING_FUTURES_APP_LOADED__ = true;
     universeSize: 15,
     topPicks: 3,
     minQuoteVolumeUsd: 30_000_000,
-    klineLookbackHours: 36,
+    klineLookbackHours: 72,
     okxHosts: [
       "https://www.okx.com",
       "https://app.okx.com",
@@ -238,6 +238,8 @@ window.__MORNING_FUTURES_APP_LOADED__ = true;
 
   let currentLang = localStorage.getItem("morning-futures-lang") === "ko" ? "ko" : "en";
   let currentReport = null;
+  const REFRESH_COOLDOWN_MS = 30_000;
+  let lastRefreshTime = 0;
   let isRefreshing = false;
   let statusModel = { type: "ready" };
 
@@ -565,8 +567,8 @@ window.__MORNING_FUTURES_APP_LOADED__ = true;
     const ethChange = eth ? getOkx24hChangePct(eth) : 0;
     const fearScore = fearGreed ? normalizeNumber(fearGreed.value - 50, 20) : 0;
     const breadthScore = normalizeNumber(breadthPct - 50, 20);
-    const btcScore = normalizeNumber(btcChange, 4);
-    const ethScore = normalizeNumber(ethChange, 5);
+    const btcScore = normalizeNumber(btcChange, 8);
+    const ethScore = normalizeNumber(ethChange, 10);
     const regimeScore = (0.35 * btcScore) + (0.25 * ethScore) + (0.25 * breadthScore) + (0.15 * fearScore);
 
     let regimeLabel = localized("Mixed / Rotation", "혼조 / 순환장");
@@ -641,12 +643,16 @@ window.__MORNING_FUTURES_APP_LOADED__ = true;
     const momentum = (0.45 * normalizeNumber(change6hPct, 4))
       + (0.35 * normalizeNumber(change24hPct, 8))
       + (0.20 * normalizeNumber(change3hPct, 2));
-    const trend = normalizeNumber((trendWinRate - 0.5) * 2, 1);
+    const trend = normalizeNumber(trendWinRate, 1);
     const volume = normalizeNumber(volumeRatio - 1, 1.25);
     const volatility = normalizeNumber(volatilityPct, 3.5);
     const longCrowdingRelief = normalizeNumber(-1 * fundingRatePct, 0.04);
     const shortCrowdingRelief = normalizeNumber(fundingRatePct, 0.04);
-    const bollingerPositionScore = clampNumber(bollingerPosition, -1, 1);
+    const overextendedLong = change6hPct > 5 ? 0.5 : 1.0;
+    const overextendedShort = change6hPct < -5 ? 0.5 : 1.0;
+    const bollingerPositionScore = bollingerPosition >= 0
+      ? clampNumber(bollingerPosition, -1, 1) * overextendedLong
+      : clampNumber(bollingerPosition, -1, 1) * overextendedShort;
     const bollingerBasisSlope = normalizeNumber(bollingerBasisSlopePct, 1.2);
     const bollingerExpansion = normalizeNumber(bollingerWidthRatio - 1, 0.6);
 
@@ -770,16 +776,15 @@ window.__MORNING_FUTURES_APP_LOADED__ = true;
     const change6hPct = getPercentChange(candles[candles.length - 7].close, lastPrice);
     const change24hPct = getPercentChange(candles[candles.length - 25].close, lastPrice);
 
-    let greenCloses = 0;
-    for (let index = 1; index < candles.length; index += 1) {
-      if (candles[index].close >= candles[index - 1].close) {
-        greenCloses += 1;
-      }
-    }
-    const trendWinRate = greenCloses / (candles.length - 1);
-
     const recentCandles = getLastItems(candles, 6);
-    const baselineCandles = getWindowBeforeTail(candles, 6, 18);
+    const recent6Closes = recentCandles.map((candle) => candle.close);
+    const prior6Candles = getWindowBeforeTail(candles, 6, 6);
+    const prior6Closes = prior6Candles.map((candle) => candle.close);
+    const recent6Avg = getAverage(recent6Closes);
+    const prior6Avg = getAverage(prior6Closes) || 1;
+    const trendWinRate = clampNumber((recent6Avg - prior6Avg) / Math.abs(prior6Avg), -1, 1);
+
+    const baselineCandles = getWindowBeforeTail(candles, 6, 30);
     const recentVolume = getAverage(recentCandles.map((candle) => candle.quoteVolume));
     const baselineVolume = getAverage(baselineCandles.map((candle) => candle.quoteVolume));
     const volumeRatio = baselineVolume > 0 ? recentVolume / baselineVolume : 1;
@@ -856,10 +861,10 @@ window.__MORNING_FUTURES_APP_LOADED__ = true;
         `거래대금이 최근 기준보다 ${volumeRatio.toFixed(2)}배 많습니다.`
       ));
     }
-    if (trendWinRate >= 0.63) {
+    if (trendWinRate >= 0.01) {
       longReasons.push(localized(
-        `Hourly closes stayed positive ${Math.round(trendWinRate * 100)}% of the time.`,
-        `시간봉 종가가 ${Math.round(trendWinRate * 100)}% 비율로 이전 봉 위에 형성됐습니다.`
+        `Recent 6h average price is ${formatSignedPct(trendWinRate * 100, 2)} versus the prior 6h average.`,
+        `최근 6시간 평균 가격이 직전 6시간 평균보다 ${formatSignedPct(trendWinRate * 100, 2)} 높습니다.`
       ));
     }
     if (fundingRatePct <= -0.01) {
@@ -906,10 +911,10 @@ window.__MORNING_FUTURES_APP_LOADED__ = true;
         `거래대금이 기준 대비 ${volumeRatio.toFixed(2)}배라 매도 압력이 살아 있습니다.`
       ));
     }
-    if (trendWinRate <= 0.42) {
+    if (trendWinRate <= -0.01) {
       shortReasons.push(localized(
-        `Hourly closes were green only ${Math.round(trendWinRate * 100)}% of the time.`,
-        `시간봉 종가가 이전 봉 위에 마감된 비율이 ${Math.round(trendWinRate * 100)}%에 불과합니다.`
+        `Recent 6h average price is ${formatSignedPct(trendWinRate * 100, 2)} versus the prior 6h average.`,
+        `최근 6시간 평균 가격이 직전 6시간 평균보다 ${formatSignedPct(trendWinRate * 100, 2)} 낮습니다.`
       ));
     }
     if (fundingRatePct >= 0.01) {
@@ -1232,8 +1237,8 @@ window.__MORNING_FUTURES_APP_LOADED__ = true;
       throw new Error("Not enough liquid pair snapshots were built to form a live report.");
     }
 
-    const minimumBiasScore = 55;
-    const minimumDirectionalEdge = 5;
+    const minimumBiasScore = 60;
+    const minimumDirectionalEdge = 10;
     const longSnapshots = [...snapshots]
       .sort((left, right) => (right.longEdge - left.longEdge) || (right.longScore - left.longScore))
       .filter((snapshot) => snapshot.longEdge >= minimumDirectionalEdge && snapshot.longScore >= minimumBiasScore)
@@ -1788,7 +1793,18 @@ window.__MORNING_FUTURES_APP_LOADED__ = true;
     document.getElementById("footer-note").textContent = t("footerFallback");
   };
 
-  const refreshReport = async () => {
+  const refreshReport = async ({ enforceCooldown = true } = {}) => {
+    const now = Date.now();
+    if (enforceCooldown && now - lastRefreshTime < REFRESH_COOLDOWN_MS) {
+      const remaining = Math.ceil((REFRESH_COOLDOWN_MS - (now - lastRefreshTime)) / 1000);
+      setStatusModel("error", { detail: `Too many requests. Please wait ${remaining}s.` });
+      return;
+    }
+
+    if (enforceCooldown) {
+      lastRefreshTime = now;
+    }
+
     setRefreshBusy(true);
     setStatusModel("busy");
 
@@ -1802,6 +1818,9 @@ window.__MORNING_FUTURES_APP_LOADED__ = true;
         setStatusModel("success");
       }
     } catch (error) {
+      if (enforceCooldown) {
+        lastRefreshTime = 0;
+      }
       renderNoReport();
       setStatusModel("error", { detail: error.message || "Unknown error." });
     } finally {
@@ -1824,5 +1843,5 @@ window.__MORNING_FUTURES_APP_LOADED__ = true;
   applyLocaleToStatic();
   renderNoReport();
   setStatusModel("ready");
-  refreshReport();
+  refreshReport({ enforceCooldown: false });
 })();
