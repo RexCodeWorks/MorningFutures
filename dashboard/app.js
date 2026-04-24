@@ -5,7 +5,7 @@ window.__MORNING_FUTURES_APP_LOADED__ = true;
     universeSize: 15,
     topPicks: 3,
     minQuoteVolumeUsd: 30_000_000,
-    klineLookbackHours: 72,
+    klineLookbackHours: 240,
     okxHosts: [
       "https://www.okx.com",
       "https://app.okx.com",
@@ -239,6 +239,17 @@ window.__MORNING_FUTURES_APP_LOADED__ = true;
   let currentLang = localStorage.getItem("morning-futures-lang") === "ko" ? "ko" : "en";
   let currentReport = null;
   const REFRESH_COOLDOWN_MS = 30_000;
+  const RISK_FILTER = {
+    minimumHistoryCandles: 168,
+    maxLongMove6hPct: 6,
+    maxLongMove24hPct: 12,
+    maxShortMove6hPct: -6,
+    maxShortMove24hPct: -12,
+    maxLookbackMovePct: 35,
+    maxAverageHourlyRangePct: 4.5,
+    extendedBandPosition: 0.85,
+    extendedBandMove6hPct: 3
+  };
   let lastRefreshTime = 0;
   let isRefreshing = false;
   let statusModel = { type: "ready" };
@@ -683,6 +694,110 @@ window.__MORNING_FUTURES_APP_LOADED__ = true;
     };
   };
 
+  const getRiskProfile = ({
+    candles,
+    change6hPct,
+    change24hPct,
+    lookbackChangePct,
+    volatilityPct,
+    bollingerPosition,
+    bandWidthRatio
+  }) => {
+    const riskFlags = [];
+    const longBlocks = [];
+    const shortBlocks = [];
+    const historyDays = candles.length / 24;
+
+    if (historyDays < 10) {
+      riskFlags.push(localized(
+        `${historyDays.toFixed(1)}d candle history`,
+        `${historyDays.toFixed(1)}일 캔들 히스토리`
+      ));
+    }
+
+    if (volatilityPct >= 3.2) {
+      riskFlags.push(localized(
+        `High average hourly range (${volatilityPct.toFixed(2)}%)`,
+        `시간봉 평균 변동폭 높음 (${volatilityPct.toFixed(2)}%)`
+      ));
+    }
+
+    if (Math.abs(lookbackChangePct) >= 25) {
+      riskFlags.push(localized(
+        `10d move is already ${formatSignedPct(lookbackChangePct, 1)}`,
+        `10일 변동이 이미 ${formatSignedPct(lookbackChangePct, 1)}`
+      ));
+    }
+
+    if (bandWidthRatio >= 1.45) {
+      riskFlags.push(localized(
+        `Bollinger bands expanded ${bandWidthRatio.toFixed(2)}x`,
+        `볼린저 밴드가 ${bandWidthRatio.toFixed(2)}배 확장`
+      ));
+    }
+
+    if (volatilityPct >= RISK_FILTER.maxAverageHourlyRangePct) {
+      longBlocks.push(localized(
+        `Skipped long: average hourly range is ${volatilityPct.toFixed(2)}%.`,
+        `롱 제외: 시간봉 평균 변동폭이 ${volatilityPct.toFixed(2)}%입니다.`
+      ));
+      shortBlocks.push(localized(
+        `Skipped short: average hourly range is ${volatilityPct.toFixed(2)}%.`,
+        `숏 제외: 시간봉 평균 변동폭이 ${volatilityPct.toFixed(2)}%입니다.`
+      ));
+    }
+
+    if (change6hPct >= RISK_FILTER.maxLongMove6hPct || change24hPct >= RISK_FILTER.maxLongMove24hPct) {
+      longBlocks.push(localized(
+        `Skipped long: move is extended (${formatSignedPct(change6hPct)} 6h, ${formatSignedPct(change24hPct)} 24h).`,
+        `롱 제외: 상승이 과확장됐습니다 (6시간 ${formatSignedPct(change6hPct)}, 24시간 ${formatSignedPct(change24hPct)}).`
+      ));
+    }
+
+    if (change6hPct <= RISK_FILTER.maxShortMove6hPct || change24hPct <= RISK_FILTER.maxShortMove24hPct) {
+      shortBlocks.push(localized(
+        `Skipped short: selloff is extended (${formatSignedPct(change6hPct)} 6h, ${formatSignedPct(change24hPct)} 24h).`,
+        `숏 제외: 하락이 과확장됐습니다 (6시간 ${formatSignedPct(change6hPct)}, 24시간 ${formatSignedPct(change24hPct)}).`
+      ));
+    }
+
+    if (lookbackChangePct >= RISK_FILTER.maxLookbackMovePct) {
+      longBlocks.push(localized(
+        `Skipped long: 10d move is already ${formatSignedPct(lookbackChangePct, 1)}.`,
+        `롱 제외: 10일 상승폭이 이미 ${formatSignedPct(lookbackChangePct, 1)}입니다.`
+      ));
+    }
+
+    if (lookbackChangePct <= -RISK_FILTER.maxLookbackMovePct) {
+      shortBlocks.push(localized(
+        `Skipped short: 10d move is already ${formatSignedPct(lookbackChangePct, 1)}.`,
+        `숏 제외: 10일 하락폭이 이미 ${formatSignedPct(lookbackChangePct, 1)}입니다.`
+      ));
+    }
+
+    if (bollingerPosition >= RISK_FILTER.extendedBandPosition && change6hPct >= RISK_FILTER.extendedBandMove6hPct) {
+      longBlocks.push(localized(
+        "Skipped long: price is chasing the upper Bollinger extreme.",
+        "롱 제외: 가격이 볼린저 상단 극단부를 추격 중입니다."
+      ));
+    }
+
+    if (bollingerPosition <= -RISK_FILTER.extendedBandPosition && change6hPct <= -RISK_FILTER.extendedBandMove6hPct) {
+      shortBlocks.push(localized(
+        "Skipped short: price is chasing the lower Bollinger extreme.",
+        "숏 제외: 가격이 볼린저 하단 극단부를 추격 중입니다."
+      ));
+    }
+
+    return {
+      riskFlags,
+      riskBlocks: {
+        long: longBlocks,
+        short: shortBlocks
+      }
+    };
+  };
+
   const getTechnicalChartNotes = ({
     bollingerPosition,
     bandWidthRatio,
@@ -767,14 +882,15 @@ window.__MORNING_FUTURES_APP_LOADED__ = true;
     const klineResponse = await fetchOkxJson(`/api/v5/market/candles?instId=${encodedInstId}&bar=1H&limit=${APP_CONFIG.klineLookbackHours}`);
     const candles = convertToKlineObjects(klineResponse.data || []);
 
-    if (candles.length < 26) {
-      throw new Error(`Not enough candles returned for ${symbol}.`);
+    if (candles.length < RISK_FILTER.minimumHistoryCandles) {
+      throw new Error(`Only ${candles.length} hourly candles returned for ${symbol}; skipping short-history listing risk.`);
     }
 
     const lastPrice = candles[candles.length - 1].close;
     const change3hPct = getPercentChange(candles[candles.length - 4].close, lastPrice);
     const change6hPct = getPercentChange(candles[candles.length - 7].close, lastPrice);
     const change24hPct = getPercentChange(candles[candles.length - 25].close, lastPrice);
+    const lookbackChangePct = getPercentChange(candles[0].close, lastPrice);
 
     const recentCandles = getLastItems(candles, 6);
     const recent6Closes = recentCandles.map((candle) => candle.close);
@@ -826,6 +942,15 @@ window.__MORNING_FUTURES_APP_LOADED__ = true;
       basisSlopePct,
       supportPrice: recentSupport,
       resistancePrice: recentResistance
+    });
+    const riskProfile = getRiskProfile({
+      candles,
+      change6hPct,
+      change24hPct,
+      lookbackChangePct,
+      volatilityPct,
+      bollingerPosition,
+      bandWidthRatio
     });
 
     const scores = newScoreFromMetrics({
@@ -948,6 +1073,7 @@ window.__MORNING_FUTURES_APP_LOADED__ = true;
       move3hPct: Number(change3hPct.toFixed(2)),
       move6hPct: Number(change6hPct.toFixed(2)),
       move24hPct: Number(change24hPct.toFixed(2)),
+      lookbackMovePct: Number(lookbackChangePct.toFixed(2)),
       trendWinRate: Number(trendWinRate.toFixed(3)),
       volumeRatio: Number(volumeRatio.toFixed(2)),
       fundingRatePct: Number(fundingRatePct.toFixed(4)),
@@ -958,6 +1084,8 @@ window.__MORNING_FUTURES_APP_LOADED__ = true;
       shortEdge: scores.shortEdge,
       longReasons,
       shortReasons,
+      riskFlags: riskProfile.riskFlags,
+      riskBlocks: riskProfile.riskBlocks,
       technicalNotes,
       chart: {
         points: chartPoints,
@@ -1134,9 +1262,11 @@ window.__MORNING_FUTURES_APP_LOADED__ = true;
       lastPrice: snapshot.lastPrice,
       move6hPct: snapshot.move6hPct,
       move24hPct: snapshot.move24hPct,
+      lookbackMovePct: snapshot.lookbackMovePct,
       fundingRatePct: snapshot.fundingRatePct,
       volumeRatio: snapshot.volumeRatio,
       volatilityPct: snapshot.volatilityPct,
+      riskFlags: Array.isArray(snapshot.riskFlags) ? snapshot.riskFlags.slice(0, 3) : [],
       reasons: reasons.slice(0, 3),
       technicalNotes: snapshot.technicalNotes.slice(0, 4),
       scoreBreakdown: [
@@ -1239,14 +1369,27 @@ window.__MORNING_FUTURES_APP_LOADED__ = true;
 
     const minimumBiasScore = 60;
     const minimumDirectionalEdge = 10;
-    const longSnapshots = [...snapshots]
+    const longQualifiedSnapshots = [...snapshots]
       .sort((left, right) => (right.longEdge - left.longEdge) || (right.longScore - left.longScore))
-      .filter((snapshot) => snapshot.longEdge >= minimumDirectionalEdge && snapshot.longScore >= minimumBiasScore)
-      .slice(0, APP_CONFIG.topPicks);
-    const shortSnapshots = [...snapshots]
+      .filter((snapshot) => snapshot.longEdge >= minimumDirectionalEdge && snapshot.longScore >= minimumBiasScore);
+    const shortQualifiedSnapshots = [...snapshots]
       .sort((left, right) => (right.shortEdge - left.shortEdge) || (right.shortScore - left.shortScore))
-      .filter((snapshot) => snapshot.shortEdge >= minimumDirectionalEdge && snapshot.shortScore >= minimumBiasScore)
+      .filter((snapshot) => snapshot.shortEdge >= minimumDirectionalEdge && snapshot.shortScore >= minimumBiasScore);
+    const longSnapshots = longQualifiedSnapshots
+      .filter((snapshot) => !snapshot.riskBlocks?.long?.length)
       .slice(0, APP_CONFIG.topPicks);
+    const shortSnapshots = shortQualifiedSnapshots
+      .filter((snapshot) => !snapshot.riskBlocks?.short?.length)
+      .slice(0, APP_CONFIG.topPicks);
+    const blockedLongCount = longQualifiedSnapshots.length - longQualifiedSnapshots.filter((snapshot) => !snapshot.riskBlocks?.long?.length).length;
+    const blockedShortCount = shortQualifiedSnapshots.length - shortQualifiedSnapshots.filter((snapshot) => !snapshot.riskBlocks?.short?.length).length;
+
+    if (blockedLongCount || blockedShortCount) {
+      warnings.push(localized(
+        `Risk filters removed ${blockedLongCount} long and ${blockedShortCount} short extended setups.`,
+        `리스크 필터가 과확장된 롱 ${blockedLongCount}개, 숏 ${blockedShortCount}개를 제외했습니다.`
+      ));
+    }
 
     if (!longSnapshots.length) {
       warnings.push(localized(
@@ -1600,6 +1743,7 @@ window.__MORNING_FUTURES_APP_LOADED__ = true;
 
   const renderCandidate = (candidate, direction) => {
     const reasons = pickArray(candidate.reasons);
+    const riskFlags = pickArray(candidate.riskFlags);
     const thesis = pickText(candidate.thesis);
     const invalidation = pickText(candidate.invalidation, t("reasonsFallback"));
     const bandWidthRatio = Number(candidate.chart?.widthRatio || 0);
@@ -1624,6 +1768,7 @@ window.__MORNING_FUTURES_APP_LOADED__ = true;
           <span class="chip">${t("chipVolume")} ${Number(candidate.volumeRatio || 0).toFixed(2)}x</span>
           ${bandWidthRatio ? `<span class="chip">${t("chipBandWidth")} ${bandWidthRatio.toFixed(2)}x</span>` : ""}
           <span class="chip">${t("chipConfidence")} ${Math.round(Number(candidate.confidence || 0))}</span>
+          ${riskFlags.map((flag) => `<span class="chip risk-chip">${flag}</span>`).join("")}
         </div>
         ${renderMiniChart(candidate)}
         ${renderScoreBreakdown(candidate)}

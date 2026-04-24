@@ -7,6 +7,18 @@ $script:MorningFuturesHeaders = @{
     "Accept" = "application/json, text/plain, */*"
 }
 
+$script:RiskFilter = @{
+    MinimumHistoryCandles = 168
+    MaxLongMove6hPct = 6
+    MaxLongMove24hPct = 12
+    MaxShortMove6hPct = -6
+    MaxShortMove24hPct = -12
+    MaxLookbackMovePct = 35
+    MaxAverageHourlyRangePct = 4.5
+    ExtendedBandPosition = 0.85
+    ExtendedBandMove6hPct = 3
+}
+
 function Get-ProjectRoot {
     return (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
 }
@@ -213,7 +225,7 @@ function New-DefaultConfig {
         UniverseSize = 15
         TopPicks = 3
         MinQuoteVolumeUsd = 30000000
-        KlineLookbackHours = 72
+        KlineLookbackHours = 240
         PreferredSymbols = @(
             "BTC-USDT-SWAP",
             "ETH-USDT-SWAP",
@@ -760,6 +772,76 @@ function New-ScoreFromMetrics {
     }
 }
 
+function New-RiskProfile {
+    param(
+        [object[]]$Candles,
+        [double]$Change6hPct,
+        [double]$Change24hPct,
+        [double]$LookbackChangePct,
+        [double]$VolatilityPct,
+        [double]$BollingerPosition,
+        [double]$BandWidthRatio
+    )
+
+    $riskFlags = New-Object System.Collections.Generic.List[string]
+    $longBlocks = New-Object System.Collections.Generic.List[string]
+    $shortBlocks = New-Object System.Collections.Generic.List[string]
+    $historyDays = @($Candles).Count / 24
+
+    if ($historyDays -lt 10) {
+        $riskFlags.Add(("{0:N1}d candle history" -f $historyDays))
+    }
+
+    if ($VolatilityPct -ge 3.2) {
+        $riskFlags.Add(("High average hourly range ({0:N2}%)" -f $VolatilityPct))
+    }
+
+    if ([Math]::Abs($LookbackChangePct) -ge 25) {
+        $riskFlags.Add(("10d move is already {0}" -f (Format-SignedPercent -Value $LookbackChangePct -Digits 1)))
+    }
+
+    if ($BandWidthRatio -ge 1.45) {
+        $riskFlags.Add(("Bollinger bands expanded {0:N2}x" -f $BandWidthRatio))
+    }
+
+    if ($VolatilityPct -ge [double]$script:RiskFilter.MaxAverageHourlyRangePct) {
+        $longBlocks.Add(("Skipped long: average hourly range is {0:N2}%." -f $VolatilityPct))
+        $shortBlocks.Add(("Skipped short: average hourly range is {0:N2}%." -f $VolatilityPct))
+    }
+
+    if ($Change6hPct -ge [double]$script:RiskFilter.MaxLongMove6hPct -or $Change24hPct -ge [double]$script:RiskFilter.MaxLongMove24hPct) {
+        $longBlocks.Add(("Skipped long: move is extended ({0} 6h, {1} 24h)." -f (Format-SignedPercent -Value $Change6hPct), (Format-SignedPercent -Value $Change24hPct)))
+    }
+
+    if ($Change6hPct -le [double]$script:RiskFilter.MaxShortMove6hPct -or $Change24hPct -le [double]$script:RiskFilter.MaxShortMove24hPct) {
+        $shortBlocks.Add(("Skipped short: selloff is extended ({0} 6h, {1} 24h)." -f (Format-SignedPercent -Value $Change6hPct), (Format-SignedPercent -Value $Change24hPct)))
+    }
+
+    if ($LookbackChangePct -ge [double]$script:RiskFilter.MaxLookbackMovePct) {
+        $longBlocks.Add(("Skipped long: 10d move is already {0}." -f (Format-SignedPercent -Value $LookbackChangePct -Digits 1)))
+    }
+
+    if ($LookbackChangePct -le (-1 * [double]$script:RiskFilter.MaxLookbackMovePct)) {
+        $shortBlocks.Add(("Skipped short: 10d move is already {0}." -f (Format-SignedPercent -Value $LookbackChangePct -Digits 1)))
+    }
+
+    if ($BollingerPosition -ge [double]$script:RiskFilter.ExtendedBandPosition -and $Change6hPct -ge [double]$script:RiskFilter.ExtendedBandMove6hPct) {
+        $longBlocks.Add("Skipped long: price is chasing the upper Bollinger extreme.")
+    }
+
+    if ($BollingerPosition -le (-1 * [double]$script:RiskFilter.ExtendedBandPosition) -and $Change6hPct -le (-1 * [double]$script:RiskFilter.ExtendedBandMove6hPct)) {
+        $shortBlocks.Add("Skipped short: price is chasing the lower Bollinger extreme.")
+    }
+
+    return [pscustomobject]@{
+        riskFlags = @($riskFlags)
+        riskBlocks = [pscustomobject]@{
+            long = @($longBlocks)
+            short = @($shortBlocks)
+        }
+    }
+}
+
 function Get-TechnicalChartNotes {
     param(
         [double]$BollingerPosition,
@@ -826,14 +908,15 @@ function Get-SymbolSnapshot {
     $klineResponse = Invoke-ApiJson -Uri ("https://www.okx.com/api/v5/market/candles?instId={0}&bar=1H&limit={1}" -f $encodedInstId, $KlineLookbackHours)
     $candles = ConvertTo-KlineObjects -Klines @($klineResponse.data)
 
-    if ($candles.Count -lt 26) {
-        throw "Not enough candles returned for $symbol."
+    if ($candles.Count -lt [int]$script:RiskFilter.MinimumHistoryCandles) {
+        throw "Only $($candles.Count) hourly candles returned for $symbol; skipping short-history listing risk."
     }
 
     $lastPrice = [double]$candles[-1].Close
     $change3hPct = Get-PercentChange -BaseValue ([double]$candles[$candles.Count - 4].Close) -CurrentValue $lastPrice
     $change6hPct = Get-PercentChange -BaseValue ([double]$candles[$candles.Count - 7].Close) -CurrentValue $lastPrice
     $change24hPct = Get-PercentChange -BaseValue ([double]$candles[$candles.Count - 25].Close) -CurrentValue $lastPrice
+    $lookbackChangePct = Get-PercentChange -BaseValue ([double]$candles[0].Close) -CurrentValue $lastPrice
 
     $recentCandles = Get-LastItems -Items $candles -Count 6
     $recent6Closes = @($recentCandles | ForEach-Object { $_.Close })
@@ -900,6 +983,14 @@ function Get-SymbolSnapshot {
         -BasisSlopePct $basisSlopePct `
         -SupportPrice $recentSupport `
         -ResistancePrice $recentResistance
+    $riskProfile = New-RiskProfile `
+        -Candles $candles `
+        -Change6hPct $change6hPct `
+        -Change24hPct $change24hPct `
+        -LookbackChangePct $lookbackChangePct `
+        -VolatilityPct $volatilityPct `
+        -BollingerPosition $bollingerPosition `
+        -BandWidthRatio $bandWidthRatio
 
     $scores = New-ScoreFromMetrics `
         -Change3hPct $change3hPct `
@@ -972,6 +1063,7 @@ function Get-SymbolSnapshot {
         move3hPct = [Math]::Round($change3hPct, 2)
         move6hPct = [Math]::Round($change6hPct, 2)
         move24hPct = [Math]::Round($change24hPct, 2)
+        lookbackMovePct = [Math]::Round($lookbackChangePct, 2)
         trendWinRate = [Math]::Round($trendWinRate, 3)
         volumeRatio = [Math]::Round($volumeRatio, 2)
         fundingRatePct = [Math]::Round($fundingRatePct, 4)
@@ -988,6 +1080,8 @@ function Get-SymbolSnapshot {
         shortEdge = $scores.ShortEdge
         longReasons = @($longReasons)
         shortReasons = @($shortReasons)
+        riskFlags = @($riskProfile.riskFlags)
+        riskBlocks = $riskProfile.riskBlocks
         technicalNotes = @($technicalNotes)
         chart = [pscustomobject]@{
             points = @($chartPoints)
@@ -1189,9 +1283,11 @@ function ConvertTo-Candidate {
         lastPrice = $Snapshot.lastPrice
         move6hPct = $Snapshot.move6hPct
         move24hPct = $Snapshot.move24hPct
+        lookbackMovePct = $Snapshot.lookbackMovePct
         fundingRatePct = $Snapshot.fundingRatePct
         volumeRatio = $Snapshot.volumeRatio
         volatilityPct = $Snapshot.volatilityPct
+        riskFlags = @($Snapshot.riskFlags | Select-Object -First 3)
         reasons = @($reasons | Select-Object -First 3)
         technicalNotes = @($Snapshot.technicalNotes | Select-Object -First 4)
         scoreBreakdown = @($scoreBreakdown)
@@ -1250,23 +1346,43 @@ function New-MorningFuturesReport {
     $topPicks = [int]$Config.TopPicks
     $minimumBiasScore = 60
     $minimumDirectionalEdge = 10
-    $longSnapshots = @(
+    $longQualifiedSnapshots = @(
         $snapshots |
         Sort-Object `
             @{ Expression = { $_.longEdge }; Descending = $true }, `
             @{ Expression = { $_.longScore }; Descending = $true } |
-        Where-Object { $_.longEdge -ge $minimumDirectionalEdge -and $_.longScore -ge $minimumBiasScore } |
-        Select-Object -First $topPicks
+        Where-Object { $_.longEdge -ge $minimumDirectionalEdge -and $_.longScore -ge $minimumBiasScore }
     )
-
-    $shortSnapshots = @(
+    $shortQualifiedSnapshots = @(
         $snapshots |
         Sort-Object `
             @{ Expression = { $_.shortEdge }; Descending = $true }, `
             @{ Expression = { $_.shortScore }; Descending = $true } |
-        Where-Object { $_.shortEdge -ge $minimumDirectionalEdge -and $_.shortScore -ge $minimumBiasScore } |
+        Where-Object { $_.shortEdge -ge $minimumDirectionalEdge -and $_.shortScore -ge $minimumBiasScore }
+    )
+    $longActionableSnapshots = @(
+        $longQualifiedSnapshots |
+        Where-Object { @($_.riskBlocks.long).Count -eq 0 }
+    )
+    $shortActionableSnapshots = @(
+        $shortQualifiedSnapshots |
+        Where-Object { @($_.riskBlocks.short).Count -eq 0 }
+    )
+    $longSnapshots = @(
+        $longActionableSnapshots |
         Select-Object -First $topPicks
     )
+
+    $shortSnapshots = @(
+        $shortActionableSnapshots |
+        Select-Object -First $topPicks
+    )
+    $blockedLongCount = @($longQualifiedSnapshots).Count - @($longActionableSnapshots).Count
+    $blockedShortCount = @($shortQualifiedSnapshots).Count - @($shortActionableSnapshots).Count
+
+    if ($blockedLongCount -gt 0 -or $blockedShortCount -gt 0) {
+        $warnings.Add(("Risk filters removed {0} long and {1} short extended setups." -f $blockedLongCount, $blockedShortCount))
+    }
 
     if ($longSnapshots.Count -eq 0) {
         $warnings.Add("No long setups cleared the minimum quality filter in this run.")

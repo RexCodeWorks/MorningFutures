@@ -45,4 +45,30 @@ if ($bearish.BollingerContribution -ge 0) {
     throw "Bearish fixture did not produce a negative Bollinger contribution."
 }
 
+$riskProfile = New-RiskProfile `
+    -Candles @(1..240) `
+    -Change6hPct 7.2 `
+    -Change24hPct 14.5 `
+    -LookbackChangePct 41 `
+    -VolatilityPct 2.4 `
+    -BollingerPosition 0.91 `
+    -BandWidthRatio 1.6
+
+if (@($riskProfile.riskBlocks.long).Count -eq 0) {
+    throw "Risk profile did not block an overextended long fixture."
+}
+
+$selloffRiskProfile = New-RiskProfile `
+    -Candles @(1..240) `
+    -Change6hPct -7.2 `
+    -Change24hPct -14.5 `
+    -LookbackChangePct -41 `
+    -VolatilityPct 2.4 `
+    -BollingerPosition -0.91 `
+    -BandWidthRatio 1.6
+
+if (@($selloffRiskProfile.riskBlocks.short).Count -eq 0) {
+    throw "Risk profile did not block an overextended short fixture."
+}
+
 Write-Host "Smoke tests passed."

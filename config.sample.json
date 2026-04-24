@@ -2,7 +2,7 @@
   "UniverseSize": 15,
   "TopPicks": 3,
   "MinQuoteVolumeUsd": 30000000,
-  "KlineLookbackHours": 72,
+  "KlineLookbackHours": 240,
   "PreferredSymbols": [
     "BTC-USDT-SWAP",
     "ETH-USDT-SWAP",
