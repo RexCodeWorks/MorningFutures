@@ -3,7 +3,7 @@ window.__MORNING_FUTURES_APP_LOADED__ = true;
 (() => {
   const APP_CONFIG = {
     universeSize: 50,
-    topPicks: 3,
+    topPicks: 8,
     minQuoteVolumeUsd: 10_000_000,
     klineLookbackHours: 240,
     okxHosts: [
@@ -114,6 +114,19 @@ window.__MORNING_FUTURES_APP_LOADED__ = true;
       chipBandWidth: "Band width",
       chipActionable: "Actionable",
       chipWatchOnly: "Watch Only",
+      chipBlocked: "High-Risk Watch",
+      perspectiveTitle: "Trader Perspectives",
+      perspectiveMomentum: "Momentum",
+      perspectiveBollinger: "Bollinger",
+      perspectiveFunding: "Funding",
+      perspectiveLiquidity: "Liquidity",
+      perspectiveMeanReversion: "Mean reversion",
+      perspectiveStructure: "Structure",
+      verdictLong: "Long-friendly",
+      verdictShort: "Short-friendly",
+      verdictNeutral: "Neutral",
+      verdictCaution: "Caution",
+      noTradePlan: "No trade plan is shown because this setup has risk blocks. Use it as context only.",
       planTitle: "Simple Plan",
       planCurrentPrice: "Current Price",
       planHoldWindow: "Hold Window",
@@ -232,6 +245,19 @@ window.__MORNING_FUTURES_APP_LOADED__ = true;
       chipBandWidth: "밴드 폭",
       chipActionable: "진입 후보",
       chipWatchOnly: "관심 후보",
+      chipBlocked: "고위험 관찰",
+      perspectiveTitle: "트레이더 관점",
+      perspectiveMomentum: "모멘텀",
+      perspectiveBollinger: "볼린저",
+      perspectiveFunding: "펀딩",
+      perspectiveLiquidity: "유동성",
+      perspectiveMeanReversion: "평균회귀",
+      perspectiveStructure: "구조",
+      verdictLong: "롱 우호",
+      verdictShort: "숏 우호",
+      verdictNeutral: "중립",
+      verdictCaution: "주의",
+      noTradePlan: "리스크 블록이 있어 거래 계획은 표시하지 않습니다. 맥락으로만 보세요.",
       planTitle: "간단 계획",
       planCurrentPrice: "현재가",
       planHoldWindow: "권장 보유",
@@ -1350,6 +1376,81 @@ window.__MORNING_FUTURES_APP_LOADED__ = true;
     };
   };
 
+  const newPerspective = (key, verdict, note) => ({ key, verdict, note });
+
+  const getCandidatePerspectives = (snapshot, direction) => {
+    const isLong = direction === "long";
+    const perspectives = [];
+    const trendAligned = isLong
+      ? snapshot.move6hPct > 0 && snapshot.move24hPct > 0
+      : snapshot.move6hPct < 0 && snapshot.move24hPct < 0;
+    const trendOpposed = isLong
+      ? snapshot.move24hPct < 0
+      : snapshot.move24hPct > 0;
+    perspectives.push(newPerspective(
+      "momentum",
+      trendAligned ? (isLong ? "long" : "short") : (trendOpposed ? "caution" : "neutral"),
+      trendAligned
+        ? localized("Trend-followers see aligned 6h and 24h pressure.", "추세 추종 관점에서는 6시간과 24시간 압력이 같은 방향입니다.")
+        : localized("Momentum is mixed, so chasing needs confirmation.", "모멘텀이 섞여 있어서 추격 진입은 확인이 더 필요합니다.")
+    ));
+
+    const bandPosition = Number(snapshot.bollingerPosition || 0);
+    const bandExtended = Math.abs(bandPosition) >= RISK_FILTER.extendedBandPosition;
+    perspectives.push(newPerspective(
+      "bollinger",
+      bandExtended ? "caution" : (bandPosition > 0 ? "long" : (bandPosition < 0 ? "short" : "neutral")),
+      bandExtended
+        ? localized("Bollinger traders would treat this as stretched rather than clean continuation.", "볼린저 관점에서는 깔끔한 지속보다 과확장 구간으로 봅니다.")
+        : localized("Price is inside a usable Bollinger zone, not at an extreme band stretch.", "가격이 극단 밴드 확장보다는 활용 가능한 볼린저 구간 안에 있습니다.")
+    ));
+
+    const funding = Number(snapshot.fundingRatePct || 0);
+    const fundingVerdict = funding < -0.03 ? "long" : (funding > 0.03 ? "short" : "neutral");
+    perspectives.push(newPerspective(
+      "funding",
+      fundingVerdict,
+      funding < -0.03
+        ? localized("Negative funding suggests shorts are paying, which can help long squeezes.", "음수 펀딩은 숏 쪽이 비용을 내는 구조라 롱 스퀴즈에 우호적일 수 있습니다.")
+        : funding > 0.03
+          ? localized("Positive funding suggests long crowding, so longs need more caution.", "양수 펀딩은 롱 쏠림을 뜻할 수 있어 롱은 더 조심해야 합니다.")
+          : localized("Funding is not crowded enough to give a strong contrarian signal.", "펀딩은 강한 역발상 신호를 줄 만큼 쏠려 있지 않습니다.")
+    ));
+
+    const sweep = snapshot.liquiditySignal || {};
+    perspectives.push(newPerspective(
+      "liquidity",
+      sweep.direction === direction ? (isLong ? "long" : "short") : (sweep.direction === "neutral" || !sweep.direction ? "neutral" : "caution"),
+      sweep.direction === direction
+        ? localized("A recent liquidity sweep supports this direction.", "최근 유동성 sweep 이 이 방향을 보조합니다.")
+        : sweep.direction && sweep.direction !== "neutral"
+          ? localized("Liquidity evidence points against this direction.", "유동성 관점은 이 방향과 충돌합니다.")
+          : localized("No clear stop-run or sweep signal is visible yet.", "아직 뚜렷한 스탑런이나 sweep 신호는 보이지 않습니다.")
+    ));
+
+    const lookbackMove = Number(snapshot.lookbackMovePct || 0);
+    const reversionCaution = isLong ? lookbackMove > RISK_FILTER.maxLookbackMovePct : lookbackMove < -RISK_FILTER.maxLookbackMovePct;
+    perspectives.push(newPerspective(
+      "meanReversion",
+      reversionCaution ? "caution" : "neutral",
+      reversionCaution
+        ? localized("Mean-reversion traders would be wary because the multi-day move is already extended.", "평균회귀 관점에서는 며칠간 움직임이 이미 커서 조심할 구간입니다.")
+        : localized("The multi-day move is not extreme enough to force a reversion-first read.", "며칠간 움직임이 극단적이지 않아 평균회귀를 우선할 상황은 아닙니다.")
+    ));
+
+    const slope = Number(snapshot.chart?.basisSlopePct || 0);
+    const structureAligned = isLong ? slope > 0 : slope < 0;
+    perspectives.push(newPerspective(
+      "structure",
+      structureAligned ? (isLong ? "long" : "short") : "caution",
+      structureAligned
+        ? localized("Simple swing structure and Bollinger basis slope agree with this side.", "단순 스윙 구조와 볼린저 기준선 기울기가 이 방향과 맞습니다.")
+        : localized("Structure is not aligned; this is not a clean wave/structure setup.", "구조가 맞지 않아 깔끔한 파동/구조 세팅은 아닙니다.")
+    ));
+
+    return perspectives;
+  };
+
   const convertToCandidate = (snapshot, direction, signalStatus = "actionable") => {
     const score = direction === "long" ? snapshot.longScore : snapshot.shortScore;
     const edge = direction === "long" ? snapshot.longEdge : snapshot.shortEdge;
@@ -1369,10 +1470,15 @@ window.__MORNING_FUTURES_APP_LOADED__ = true;
       fundingPoints = snapshot.scoreComponents.shortFunding;
     }
 
+    const riskBlockCount = direction === "long"
+      ? (snapshot.riskBlocks?.long?.length || 0)
+      : (snapshot.riskBlocks?.short?.length || 0);
+    const resolvedSignalStatus = signalStatus === "actionable" ? "actionable" : (riskBlockCount ? "blocked" : "watch");
+
     return {
       symbol: snapshot.symbol,
       direction,
-      signalStatus,
+      signalStatus: resolvedSignalStatus,
       biasScore: Number(score.toFixed(1)),
       edge: Number(Math.abs(edge).toFixed(1)),
       confidence: Math.round(confidence),
@@ -1383,8 +1489,10 @@ window.__MORNING_FUTURES_APP_LOADED__ = true;
       fundingRatePct: snapshot.fundingRatePct,
       volumeRatio: snapshot.volumeRatio,
       volatilityPct: snapshot.volatilityPct,
+      bollingerPosition: snapshot.bollingerPosition,
       riskFlags: Array.isArray(snapshot.riskFlags) ? snapshot.riskFlags.slice(0, 3) : [],
       liquiditySignal: snapshot.liquiditySignal,
+      perspectives: getCandidatePerspectives(snapshot, direction),
       reasons: reasons.slice(0, 3),
       technicalNotes: snapshot.technicalNotes.slice(0, 4),
       scoreBreakdown: [
@@ -1490,11 +1598,23 @@ window.__MORNING_FUTURES_APP_LOADED__ = true;
     const minimumShortBiasScore = 78;
     const minimumShortDirectionalEdge = 14;
     const maximumShortMarketRegimeScore = 0.1;
-    const minimumLongWatchScore = 70;
-    const minimumLongWatchEdge = 10;
-    const minimumShortWatchScore = 72;
-    const minimumShortWatchEdge = 12;
-    const maximumShortWatchMarketRegimeScore = 0.2;
+    const minimumLongWatchScore = 55;
+    const minimumLongWatchEdge = 3;
+    const minimumShortWatchScore = 55;
+    const minimumShortWatchEdge = 3;
+    const maximumShortWatchMarketRegimeScore = 1;
+    const fillWatchSnapshots = (primarySnapshots, fallbackSnapshots, limit) => {
+      const selected = [];
+      const seen = new Set();
+      [...primarySnapshots, ...fallbackSnapshots].forEach((snapshot) => {
+        if (selected.length >= limit || seen.has(snapshot.symbol)) {
+          return;
+        }
+        selected.push(snapshot);
+        seen.add(snapshot.symbol);
+      });
+      return selected;
+    };
     const rawLongWatchSnapshots = [...snapshots]
       .sort((left, right) => (right.longEdge - left.longEdge) || (right.longScore - left.longScore))
       .filter((snapshot) => snapshot.longEdge >= minimumLongWatchEdge && snapshot.longScore >= minimumLongWatchScore);
@@ -1505,10 +1625,12 @@ window.__MORNING_FUTURES_APP_LOADED__ = true;
         && snapshot.shortScore >= minimumShortWatchScore
         && marketContext.regimeScore <= maximumShortWatchMarketRegimeScore
       ));
-    const longWatchSnapshots = rawLongWatchSnapshots
-      .filter((snapshot) => !snapshot.riskBlocks?.long?.length);
-    const shortWatchSnapshots = rawShortWatchSnapshots
-      .filter((snapshot) => !snapshot.riskBlocks?.short?.length);
+    const longFallbackSnapshots = [...snapshots]
+      .sort((left, right) => (right.longScore - left.longScore) || (right.longEdge - left.longEdge));
+    const shortFallbackSnapshots = [...snapshots]
+      .sort((left, right) => (right.shortScore - left.shortScore) || (right.shortEdge - left.shortEdge));
+    const longWatchSnapshots = fillWatchSnapshots(rawLongWatchSnapshots, longFallbackSnapshots, APP_CONFIG.topPicks);
+    const shortWatchSnapshots = fillWatchSnapshots(rawShortWatchSnapshots, shortFallbackSnapshots, APP_CONFIG.topPicks);
     const longActionableSnapshots = longWatchSnapshots
       .filter((snapshot) => (
         snapshot.longEdge >= minimumLongDirectionalEdge
@@ -1528,7 +1650,7 @@ window.__MORNING_FUTURES_APP_LOADED__ = true;
       .slice(0, APP_CONFIG.topPicks);
     const longWatchOnlySnapshots = longWatchSnapshots
       .filter((snapshot) => !longSnapshots.includes(snapshot))
-      .slice(0, Math.max(0, APP_CONFIG.topPicks - longSnapshots.length));
+        .slice(0, Math.max(0, APP_CONFIG.topPicks - longSnapshots.length));
     const shortWatchOnlySnapshots = shortWatchSnapshots
       .filter((snapshot) => !shortSnapshots.includes(snapshot))
       .slice(0, Math.max(0, APP_CONFIG.topPicks - shortSnapshots.length));
@@ -1900,13 +2022,74 @@ window.__MORNING_FUTURES_APP_LOADED__ = true;
     `;
   };
 
+  const getPerspectiveLabel = (key) => {
+    switch (key) {
+      case "momentum":
+        return t("perspectiveMomentum");
+      case "bollinger":
+        return t("perspectiveBollinger");
+      case "funding":
+        return t("perspectiveFunding");
+      case "liquidity":
+        return t("perspectiveLiquidity");
+      case "meanReversion":
+        return t("perspectiveMeanReversion");
+      case "structure":
+        return t("perspectiveStructure");
+      default:
+        return key;
+    }
+  };
+
+  const getVerdictLabel = (verdict) => {
+    switch (verdict) {
+      case "long":
+        return t("verdictLong");
+      case "short":
+        return t("verdictShort");
+      case "caution":
+        return t("verdictCaution");
+      default:
+        return t("verdictNeutral");
+    }
+  };
+
+  const renderPerspectives = (candidate) => {
+    const perspectives = Array.isArray(candidate.perspectives)
+      ? candidate.perspectives
+      : getCandidatePerspectives(candidate, candidate.direction || "long");
+    if (!perspectives.length) {
+      return "";
+    }
+
+    return `
+      <section class="analysis-block">
+        <div class="analysis-head">
+          <div class="analysis-title">${t("perspectiveTitle")}</div>
+        </div>
+        <div class="perspective-list">
+          ${perspectives.map((item) => `
+            <div class="perspective-item">
+              <div class="perspective-name">${getPerspectiveLabel(item.key)}</div>
+              <div class="perspective-body">
+                <div class="perspective-verdict">${getVerdictLabel(item.verdict)}</div>
+                <div>${pickText(item.note)}</div>
+              </div>
+            </div>
+          `).join("")}
+        </div>
+      </section>
+    `;
+  };
+
   const renderCandidate = (candidate, direction) => {
     const reasons = pickArray(candidate.reasons);
     const riskFlags = pickArray(candidate.riskFlags);
     const thesis = pickText(candidate.thesis);
     const invalidation = pickText(candidate.invalidation, t("reasonsFallback"));
     const bandWidthRatio = Number(candidate.chart?.widthRatio || 0);
-    const isActionable = candidate.signalStatus !== "watch";
+    const isActionable = candidate.signalStatus === "actionable";
+    const isBlocked = candidate.signalStatus === "blocked";
     const liquiditySignal = candidate.liquiditySignal || {};
     const hasLiquiditySignal = liquiditySignal.type && liquiditySignal.type !== "none";
 
@@ -1923,7 +2106,7 @@ window.__MORNING_FUTURES_APP_LOADED__ = true;
           </div>
         </div>
         <div class="chips">
-          <span class="chip ${isActionable ? "action-chip" : "watch-chip"}">${isActionable ? t("chipActionable") : t("chipWatchOnly")}</span>
+          <span class="chip ${isActionable ? "action-chip" : (isBlocked ? "blocked-chip" : "watch-chip")}">${isActionable ? t("chipActionable") : (isBlocked ? t("chipBlocked") : t("chipWatchOnly"))}</span>
           <span class="chip">${t("chipPrice")} ${formatPrice(candidate.lastPrice)}</span>
           <span class="chip">${t("chipMove6h")} ${formatSignedPct(candidate.move6hPct)}</span>
           <span class="chip">${t("chipMove24h")} ${formatSignedPct(candidate.move24hPct)}</span>
@@ -1935,7 +2118,8 @@ window.__MORNING_FUTURES_APP_LOADED__ = true;
           ${riskFlags.map((flag) => `<span class="chip risk-chip">${flag}</span>`).join("")}
         </div>
         ${renderMiniChart(candidate)}
-        ${renderBeginnerPlan(candidate.beginnerPlan, direction)}
+        ${isBlocked ? `<section class="analysis-block"><div class="muted">${t("noTradePlan")}</div></section>` : renderBeginnerPlan(candidate.beginnerPlan, direction)}
+        ${renderPerspectives(candidate)}
         ${renderScoreBreakdown(candidate)}
         ${renderTechnicalNotes(candidate)}
         ${reasons.length

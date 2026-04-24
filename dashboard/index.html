@@ -428,6 +428,12 @@
       border: 1px solid rgba(55, 93, 156, 0.18);
     }
 
+    .blocked-chip {
+      background: rgba(155, 44, 44, 0.12);
+      color: var(--short);
+      border: 1px solid rgba(155, 44, 44, 0.2);
+    }
+
     .analysis-block {
       display: grid;
       gap: 10px;
@@ -449,6 +455,41 @@
       font-weight: 800;
       letter-spacing: 0.08em;
       text-transform: uppercase;
+    }
+
+    .perspective-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .perspective-item {
+      display: grid;
+      grid-template-columns: minmax(110px, 0.34fr) 1fr;
+      gap: 10px;
+      align-items: start;
+      padding: 10px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.5);
+      border: 1px solid rgba(24, 33, 40, 0.08);
+    }
+
+    .perspective-name {
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--ink);
+    }
+
+    .perspective-body {
+      display: grid;
+      gap: 4px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .perspective-verdict {
+      font-weight: 800;
+      color: var(--ink);
     }
 
     .analysis-meta {
@@ -820,7 +861,7 @@
       </article>
     </section>
 
-    <section class="grid">
+    <section class="grid" hidden>
       <article class="panel section">
         <div class="section-head">
           <h3 id="summary-title-head">Market Summary</h3>
@@ -829,7 +870,7 @@
         <div class="summary-list" id="summary-list"></div>
       </article>
 
-      <article class="panel section">
+      <article class="panel section" hidden>
         <div class="section-head">
           <h3 id="headline-title-head">Headline Tape</h3>
           <span class="pill market" id="headline-pill">News</span>
@@ -838,7 +879,7 @@
       </article>
     </section>
 
-    <section class="panel section">
+    <section class="panel section" hidden>
       <div class="section-head">
         <h3 id="views-title-head">Market Views</h3>
         <span class="pill market" id="views-pill">Playbook</span>

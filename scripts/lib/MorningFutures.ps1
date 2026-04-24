@@ -224,7 +224,7 @@ function Get-BollingerSeries {
 function New-DefaultConfig {
     return [pscustomobject]@{
         UniverseSize = 50
-        TopPicks = 3
+        TopPicks = 8
         MinQuoteVolumeUsd = 10000000
         KlineLookbackHours = 240
         PreferredSymbols = @(
@@ -1113,6 +1113,7 @@ function Get-SymbolSnapshot {
         bollingerBasis = [Math]::Round([double]$currentBollinger.basis, 6)
         bollingerUpper = [Math]::Round([double]$currentBollinger.upper, 6)
         bollingerLower = [Math]::Round([double]$currentBollinger.lower, 6)
+        bollingerPosition = [Math]::Round($bollingerPosition, 3)
         bollingerWidthPct = [Math]::Round([double]$currentBollinger.widthPct, 2)
         bollingerWidthRatio = [Math]::Round($bandWidthRatio, 2)
         bollingerBasisSlopePct = [Math]::Round($basisSlopePct, 2)
@@ -1319,10 +1320,14 @@ function ConvertTo-Candidate {
         $invalidation = "Reassess if price rises above {0} or the 6h trend turns back up." -f $beginnerPlan.stopLossPrice
     }
 
+    $riskBlockCount = if ($Direction -eq "long") { @($Snapshot.riskBlocks.long).Count } else { @($Snapshot.riskBlocks.short).Count }
+    $resolvedSignalStatus = if ($SignalStatus -eq "actionable") { "actionable" } elseif ($riskBlockCount -gt 0) { "blocked" } else { "watch" }
+    $bollingerPosition = if ($Snapshot.PSObject.Properties.Name -contains "bollingerPosition") { $Snapshot.bollingerPosition } else { 0 }
+
     return [pscustomobject]@{
         symbol = $Snapshot.symbol
         direction = $Direction
-        signalStatus = $SignalStatus
+        signalStatus = $resolvedSignalStatus
         biasScore = [Math]::Round($score, 1)
         edge = [Math]::Round([Math]::Abs($edge), 1)
         confidence = [Math]::Round($confidence, 0)
@@ -1333,6 +1338,7 @@ function ConvertTo-Candidate {
         fundingRatePct = $Snapshot.fundingRatePct
         volumeRatio = $Snapshot.volumeRatio
         volatilityPct = $Snapshot.volatilityPct
+        bollingerPosition = $bollingerPosition
         riskFlags = @($Snapshot.riskFlags | Select-Object -First 3)
         liquiditySignal = $Snapshot.liquiditySignal
         reasons = @($reasons | Select-Object -First 3)
@@ -1396,11 +1402,11 @@ function New-MorningFuturesReport {
     $minimumShortBiasScore = 78
     $minimumShortDirectionalEdge = 14
     $maximumShortMarketRegimeScore = 0.1
-    $minimumLongWatchScore = 70
-    $minimumLongWatchEdge = 10
-    $minimumShortWatchScore = 72
-    $minimumShortWatchEdge = 12
-    $maximumShortWatchMarketRegimeScore = 0.2
+    $minimumLongWatchScore = 55
+    $minimumLongWatchEdge = 3
+    $minimumShortWatchScore = 55
+    $minimumShortWatchEdge = 3
+    $maximumShortWatchMarketRegimeScore = 1
     $rawLongWatchSnapshots = @(
         $snapshots |
         Sort-Object `
@@ -1419,13 +1425,31 @@ function New-MorningFuturesReport {
             [double]$marketContext.regimeScore -le $maximumShortWatchMarketRegimeScore
         }
     )
+    $longWatchSnapshots = @($rawLongWatchSnapshots)
+    $shortWatchSnapshots = @($rawShortWatchSnapshots)
+    $longFallbackSnapshots = @(
+        $snapshots |
+        Sort-Object `
+            @{ Expression = { $_.longScore }; Descending = $true }, `
+            @{ Expression = { $_.longEdge }; Descending = $true }
+    )
+    $shortFallbackSnapshots = @(
+        $snapshots |
+        Sort-Object `
+            @{ Expression = { $_.shortScore }; Descending = $true }, `
+            @{ Expression = { $_.shortEdge }; Descending = $true }
+    )
     $longWatchSnapshots = @(
-        $rawLongWatchSnapshots |
-        Where-Object { @($_.riskBlocks.long).Count -eq 0 }
+        @($rawLongWatchSnapshots + $longFallbackSnapshots) |
+        Group-Object symbol |
+        ForEach-Object { $_.Group[0] } |
+        Select-Object -First $topPicks
     )
     $shortWatchSnapshots = @(
-        $rawShortWatchSnapshots |
-        Where-Object { @($_.riskBlocks.short).Count -eq 0 }
+        @($rawShortWatchSnapshots + $shortFallbackSnapshots) |
+        Group-Object symbol |
+        ForEach-Object { $_.Group[0] } |
+        Select-Object -First $topPicks
     )
     $longActionableSnapshots = @(
         $longWatchSnapshots |
