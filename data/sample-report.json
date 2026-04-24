@@ -1,0 +1,912 @@
+﻿{
+    "generatedAt":  "2026-04-22T21:18:41.5889068-07:00",
+    "generatedAtLocal":  "2026-04-22T21:18:41.5899055-07:00",
+    "timezone":  "Pacific Standard Time",
+    "isSample":  true,
+    "marketContext":  {
+                          "regimeLabel":  "Mild Risk-Off",
+                          "regimeScore":  -0.276,
+                          "breadthPositivePct":  18.2,
+                          "summary":  "Broad risk appetite is soft enough that downside continuation and failed bounce setups deserve extra attention.",
+                          "fearGreed":  {
+                                            "value":  46,
+                                            "label":  "Fear"
+                                        },
+                          "leaders":  [
+                                          {
+                                              "symbol":  "BTC-USDT-SWAP",
+                                              "change24hPct":  0.51
+                                          },
+                                          {
+                                              "symbol":  "BCH-USDT-SWAP",
+                                              "change24hPct":  0.11
+                                          },
+                                          {
+                                              "symbol":  "DOGE-USDT-SWAP",
+                                              "change24hPct":  -0.41
+                                          }
+                                      ],
+                          "laggards":  [
+                                           {
+                                               "symbol":  "LINK-USDT-SWAP",
+                                               "change24hPct":  -3.28
+                                           },
+                                           {
+                                               "symbol":  "ADA-USDT-SWAP",
+                                               "change24hPct":  -2.8
+                                           },
+                                           {
+                                               "symbol":  "SUI-USDT-SWAP",
+                                               "change24hPct":  -2.67
+                                           }
+                                       ]
+                      },
+    "longCandidates":  [
+
+                       ],
+    "shortCandidates":  [
+                            {
+                                "symbol":  "ETH-USDT-SWAP",
+                                "direction":  "short",
+                                "biasScore":  71.7,
+                                "edge":  40.7,
+                                "confidence":  78,
+                                "lastPrice":  2342.1,
+                                "move6hPct":  -2.36,
+                                "move24hPct":  -0.88,
+                                "fundingRatePct":  0.0059,
+                                "volumeRatio":  1.17,
+                                "volatilityPct":  0.75,
+                                "reasons":  [
+                                                "6h momentum is slipping at -2.36%",
+                                                "price is holding below the Bollinger basis and leaning toward the lower band",
+                                                "Bollinger bands are expanding, which currently supports downside continuation more than snap-back risk"
+                                            ],
+                                "technicalNotes":  [
+                                                       "Price is pressing the lower Bollinger band while the bands expand, which keeps downside continuation in play.",
+                                                       "The Bollinger basis is sloping down by -0.32%, which keeps short-term trend control with sellers.",
+                                                       "Band width is wider than its recent average, which confirms that the current move is active instead of sleepy.",
+                                                       "Recent 24h range support is near 2330.13 and resistance is near 2422.79."
+                                                   ],
+                                "scoreBreakdown":  [
+                                                       {
+                                                           "key":  "momentumTrend",
+                                                           "label":  "Momentum + trend",
+                                                           "points":  10.5
+                                                       },
+                                                       {
+                                                           "key":  "bollinger",
+                                                           "label":  "Bollinger alignment",
+                                                           "points":  7.1
+                                                       },
+                                                       {
+                                                           "key":  "marketRegime",
+                                                           "label":  "Market regime",
+                                                           "points":  1.9
+                                                       },
+                                                       {
+                                                           "key":  "opportunity",
+                                                           "label":  "Volume + volatility",
+                                                           "points":  1.3
+                                                       },
+                                                       {
+                                                           "key":  "funding",
+                                                           "label":  "Funding crowding",
+                                                           "points":  0.9
+                                                       }
+                                                   ],
+                                "thesis":  "ETH-USDT-SWAP is underperforming the broader liquid futures basket and still looks vulnerable to downside continuation if the tape does not recover.",
+                                "invalidation":  "Reassess if price rises above 2360.84 or the 6h trend turns back up.",
+                                "chart":  {
+                                              "points":  [
+                                                             {
+                                                                 "openTime":  "2026-04-22T05:00:00.0000000-07:00",
+                                                                 "open":  2397.4,
+                                                                 "high":  2406.14,
+                                                                 "low":  2394.76,
+                                                                 "close":  2403.62,
+                                                                 "basis":  2352.812,
+                                                                 "upper":  2427.623751,
+                                                                 "lower":  2278.000249,
+                                                                 "widthPct":  6.36
+                                                             },
+                                                             {
+                                                                 "openTime":  "2026-04-22T06:00:00.0000000-07:00",
+                                                                 "open":  2403.63,
+                                                                 "high":  2422.45,
+                                                                 "low":  2399.14,
+                                                                 "close":  2415.95,
+                                                                 "basis":  2358.356,
+                                                                 "upper":  2434.613957,
+                                                                 "lower":  2282.098043,
+                                                                 "widthPct":  6.47
+                                                             },
+                                                             {
+                                                                 "openTime":  "2026-04-22T07:00:00.0000000-07:00",
+                                                                 "open":  2415.95,
+                                                                 "high":  2422.79,
+                                                                 "low":  2390.5,
+                                                                 "close":  2401.8,
+                                                                 "basis":  2362.8625,
+                                                                 "upper":  2438.199088,
+                                                                 "lower":  2287.525912,
+                                                                 "widthPct":  6.38
+                                                             },
+                                                             {
+                                                                 "openTime":  "2026-04-22T08:00:00.0000000-07:00",
+                                                                 "open":  2401.8,
+                                                                 "high":  2412.75,
+                                                                 "low":  2388.88,
+                                                                 "close":  2402.76,
+                                                                 "basis":  2368.1255,
+                                                                 "upper":  2439.038938,
+                                                                 "lower":  2297.212062,
+                                                                 "widthPct":  5.99
+                                                             },
+                                                             {
+                                                                 "openTime":  "2026-04-22T09:00:00.0000000-07:00",
+                                                                 "open":  2402.76,
+                                                                 "high":  2412.73,
+                                                                 "low":  2383.14,
+                                                                 "close":  2385.47,
+                                                                 "basis":  2371.732,
+                                                                 "upper":  2438.33954,
+                                                                 "lower":  2305.12446,
+                                                                 "widthPct":  5.62
+                                                             },
+                                                             {
+                                                                 "openTime":  "2026-04-22T10:00:00.0000000-07:00",
+                                                                 "open":  2385.48,
+                                                                 "high":  2401.65,
+                                                                 "low":  2385.47,
+                                                                 "close":  2398.02,
+                                                                 "basis":  2376.08,
+                                                                 "upper":  2437.422787,
+                                                                 "lower":  2314.737213,
+                                                                 "widthPct":  5.16
+                                                             },
+                                                             {
+                                                                 "openTime":  "2026-04-22T11:00:00.0000000-07:00",
+                                                                 "open":  2398.01,
+                                                                 "high":  2403.6,
+                                                                 "low":  2394,
+                                                                 "close":  2396.07,
+                                                                 "basis":  2380.373,
+                                                                 "upper":  2434.237336,
+                                                                 "lower":  2326.508664,
+                                                                 "widthPct":  4.53
+                                                             },
+                                                             {
+                                                                 "openTime":  "2026-04-22T12:00:00.0000000-07:00",
+                                                                 "open":  2396.08,
+                                                                 "high":  2406,
+                                                                 "low":  2387.68,
+                                                                 "close":  2396.53,
+                                                                 "basis":  2383.8895,
+                                                                 "upper":  2432.026498,
+                                                                 "lower":  2335.752502,
+                                                                 "widthPct":  4.04
+                                                             },
+                                                             {
+                                                                 "openTime":  "2026-04-22T13:00:00.0000000-07:00",
+                                                                 "open":  2396.53,
+                                                                 "high":  2401.45,
+                                                                 "low":  2389.66,
+                                                                 "close":  2390.79,
+                                                                 "basis":  2387.211,
+                                                                 "upper":  2426.882302,
+                                                                 "lower":  2347.539698,
+                                                                 "widthPct":  3.32
+                                                             },
+                                                             {
+                                                                 "openTime":  "2026-04-22T14:00:00.0000000-07:00",
+                                                                 "open":  2390.78,
+                                                                 "high":  2405,
+                                                                 "low":  2390.58,
+                                                                 "close":  2401.12,
+                                                                 "basis":  2391.192,
+                                                                 "upper":  2417.374508,
+                                                                 "lower":  2365.009492,
+                                                                 "widthPct":  2.19
+                                                             },
+                                                             {
+                                                                 "openTime":  "2026-04-22T15:00:00.0000000-07:00",
+                                                                 "open":  2401.13,
+                                                                 "high":  2404.13,
+                                                                 "low":  2393,
+                                                                 "close":  2398.61,
+                                                                 "basis":  2392.646,
+                                                                 "upper":  2417.022714,
+                                                                 "lower":  2368.269286,
+                                                                 "widthPct":  2.04
+                                                             },
+                                                             {
+                                                                 "openTime":  "2026-04-22T16:00:00.0000000-07:00",
+                                                                 "open":  2398.62,
+                                                                 "high":  2399.35,
+                                                                 "low":  2372.03,
+                                                                 "close":  2372.93,
+                                                                 "basis":  2393.16,
+                                                                 "upper":  2415.317606,
+                                                                 "lower":  2371.002394,
+                                                                 "widthPct":  1.85
+                                                             },
+                                                             {
+                                                                 "openTime":  "2026-04-22T17:00:00.0000000-07:00",
+                                                                 "open":  2372.94,
+                                                                 "high":  2382.19,
+                                                                 "low":  2342.5,
+                                                                 "close":  2371.92,
+                                                                 "basis":  2393.606,
+                                                                 "upper":  2413.56762,
+                                                                 "lower":  2373.64438,
+                                                                 "widthPct":  1.67
+                                                             },
+                                                             {
+                                                                 "openTime":  "2026-04-22T18:00:00.0000000-07:00",
+                                                                 "open":  2371.93,
+                                                                 "high":  2372,
+                                                                 "low":  2359.16,
+                                                                 "close":  2365.93,
+                                                                 "basis":  2392.132,
+                                                                 "upper":  2415.419698,
+                                                                 "lower":  2368.844302,
+                                                                 "widthPct":  1.95
+                                                             },
+                                                             {
+                                                                 "openTime":  "2026-04-22T19:00:00.0000000-07:00",
+                                                                 "open":  2365.94,
+                                                                 "high":  2366.45,
+                                                                 "low":  2343,
+                                                                 "close":  2351.16,
+                                                                 "basis":  2390.086,
+                                                                 "upper":  2419.434131,
+                                                                 "lower":  2360.737869,
+                                                                 "widthPct":  2.46
+                                                             },
+                                                             {
+                                                                 "openTime":  "2026-04-22T20:00:00.0000000-07:00",
+                                                                 "open":  2351.15,
+                                                                 "high":  2352.23,
+                                                                 "low":  2330.13,
+                                                                 "close":  2339.83,
+                                                                 "basis":  2387.6325,
+                                                                 "upper":  2424.266991,
+                                                                 "lower":  2350.998009,
+                                                                 "widthPct":  3.07
+                                                             },
+                                                             {
+                                                                 "openTime":  "2026-04-22T21:00:00.0000000-07:00",
+                                                                 "open":  2339.83,
+                                                                 "high":  2343.73,
+                                                                 "low":  2336.25,
+                                                                 "close":  2342.1,
+                                                                 "basis":  2385.386,
+                                                                 "upper":  2427.056949,
+                                                                 "lower":  2343.715051,
+                                                                 "widthPct":  3.49
+                                                             }
+                                                         ],
+                                              "support":  2330.13,
+                                              "resistance":  2422.79,
+                                              "bollingerPeriod":  20,
+                                              "bollingerDeviation":  2,
+                                              "widthPct":  3.49,
+                                              "widthRatio":  1.29,
+                                              "basisSlopePct":  -0.32
+                                          },
+                                "beginnerPlan":  {
+                                                     "style":  "same-day intraday",
+                                                     "entryPrice":  2342.1,
+                                                     "stopLossPrice":  2360.84,
+                                                     "stopLossPct":  0.8,
+                                                     "takeProfit1Price":  2317.74,
+                                                     "takeProfit1Pct":  1.04,
+                                                     "takeProfit2Price":  2300.88,
+                                                     "takeProfit2Pct":  1.76,
+                                                     "holdMinHours":  2,
+                                                     "holdMaxHours":  8,
+                                                     "holdWindowLabel":  "2-8h",
+                                                     "partialExitRule":  "If price reaches TP1 on the way down, consider taking 30-50% off. If it reaches TP2, consider closing most or all of the rest.",
+                                                     "timingNote":  "This is designed for a same-day short. If price stops trending lower after the hold window, reduce or close the trade.",
+                                                     "recommendedLeverage":  "2x-3x",
+                                                     "scaleOutGuide":  "Take 30% at TP1, 50% at TP2, and trail the last 20% only if the trend still confirms.",
+                                                     "priceLogic":  "These levels use recent hourly volatility. The stop is about 1R away, TP1 is near 1.3R, and TP2 is near 2.2R.",
+                                                     "leverageNote":  "Conservative in-app heuristic for beginners, not exchange advice.",
+                                                     "starterNote":  "For beginners, do not add to a losing futures position."
+                                                 }
+                            },
+                            {
+                                "symbol":  "SOL-USDT-SWAP",
+                                "direction":  "short",
+                                "biasScore":  73.8,
+                                "edge":  39.2,
+                                "confidence":  77,
+                                "lastPrice":  85.71,
+                                "move6hPct":  -1.9,
+                                "move24hPct":  -1.55,
+                                "fundingRatePct":  -0.0006,
+                                "volumeRatio":  1,
+                                "volatilityPct":  0.71,
+                                "reasons":  [
+                                                "6h momentum is slipping at -1.90%",
+                                                "hourly closes were green only 37% of the time",
+                                                "price is holding below the Bollinger basis and leaning toward the lower band"
+                                            ],
+                                "technicalNotes":  [
+                                                       "Price is pressing the lower Bollinger band while the bands expand, which keeps downside continuation in play.",
+                                                       "The Bollinger basis is sloping down by -0.48%, which keeps short-term trend control with sellers.",
+                                                       "Band width is wider than its recent average, which confirms that the current move is active instead of sleepy.",
+                                                       "Recent 24h range support is near 85.4 and resistance is near 89.28."
+                                                   ],
+                                "scoreBreakdown":  [
+                                                       {
+                                                           "key":  "momentumTrend",
+                                                           "label":  "Momentum + trend",
+                                                           "points":  10.7
+                                                       },
+                                                       {
+                                                           "key":  "bollinger",
+                                                           "label":  "Bollinger alignment",
+                                                           "points":  7
+                                                       },
+                                                       {
+                                                           "key":  "marketRegime",
+                                                           "label":  "Market regime",
+                                                           "points":  1.9
+                                                       },
+                                                       {
+                                                           "key":  "opportunity",
+                                                           "label":  "Volume + volatility",
+                                                           "points":  4.2
+                                                       },
+                                                       {
+                                                           "key":  "funding",
+                                                           "label":  "Funding crowding",
+                                                           "points":  -0.1
+                                                       }
+                                                   ],
+                                "thesis":  "SOL-USDT-SWAP is underperforming the broader liquid futures basket and still looks vulnerable to downside continuation if the tape does not recover.",
+                                "invalidation":  "Reassess if price rises above 86.396 or the 6h trend turns back up.",
+                                "chart":  {
+                                              "points":  [
+                                                             {
+                                                                 "openTime":  "2026-04-22T05:00:00.0000000-07:00",
+                                                                 "open":  88.29,
+                                                                 "high":  88.63,
+                                                                 "low":  88.18,
+                                                                 "close":  88.54,
+                                                                 "basis":  86.819,
+                                                                 "upper":  89.433413,
+                                                                 "lower":  84.204587,
+                                                                 "widthPct":  6.02
+                                                             },
+                                                             {
+                                                                 "openTime":  "2026-04-22T06:00:00.0000000-07:00",
+                                                                 "open":  88.54,
+                                                                 "high":  89.14,
+                                                                 "low":  88.38,
+                                                                 "close":  89.05,
+                                                                 "basis":  87.0085,
+                                                                 "upper":  89.691948,
+                                                                 "lower":  84.325052,
+                                                                 "widthPct":  6.17
+                                                             },
+                                                             {
+                                                                 "openTime":  "2026-04-22T07:00:00.0000000-07:00",
+                                                                 "open":  89.06,
+                                                                 "high":  89.28,
+                                                                 "low":  88.43,
+                                                                 "close":  88.68,
+                                                                 "basis":  87.183,
+                                                                 "upper":  89.824303,
+                                                                 "lower":  84.541697,
+                                                                 "widthPct":  6.06
+                                                             },
+                                                             {
+                                                                 "openTime":  "2026-04-22T08:00:00.0000000-07:00",
+                                                                 "open":  88.69,
+                                                                 "high":  88.75,
+                                                                 "low":  87.98,
+                                                                 "close":  88.15,
+                                                                 "basis":  87.365,
+                                                                 "upper":  89.731859,
+                                                                 "lower":  84.998141,
+                                                                 "widthPct":  5.42
+                                                             },
+                                                             {
+                                                                 "openTime":  "2026-04-22T09:00:00.0000000-07:00",
+                                                                 "open":  88.15,
+                                                                 "high":  88.43,
+                                                                 "low":  87.48,
+                                                                 "close":  87.62,
+                                                                 "basis":  87.4775,
+                                                                 "upper":  89.661165,
+                                                                 "lower":  85.293835,
+                                                                 "widthPct":  4.99
+                                                             },
+                                                             {
+                                                                 "openTime":  "2026-04-22T10:00:00.0000000-07:00",
+                                                                 "open":  87.61,
+                                                                 "high":  87.98,
+                                                                 "low":  87.58,
+                                                                 "close":  87.8,
+                                                                 "basis":  87.6125,
+                                                                 "upper":  89.50612,
+                                                                 "lower":  85.71888,
+                                                                 "widthPct":  4.32
+                                                             },
+                                                             {
+                                                                 "openTime":  "2026-04-22T11:00:00.0000000-07:00",
+                                                                 "open":  87.81,
+                                                                 "high":  88.34,
+                                                                 "low":  87.74,
+                                                                 "close":  87.77,
+                                                                 "basis":  87.735,
+                                                                 "upper":  89.309681,
+                                                                 "lower":  86.160319,
+                                                                 "widthPct":  3.59
+                                                             },
+                                                             {
+                                                                 "openTime":  "2026-04-22T12:00:00.0000000-07:00",
+                                                                 "open":  87.77,
+                                                                 "high":  87.79,
+                                                                 "low":  87.04,
+                                                                 "close":  87.33,
+                                                                 "basis":  87.802,
+                                                                 "upper":  89.175122,
+                                                                 "lower":  86.428878,
+                                                                 "widthPct":  3.13
+                                                             },
+                                                             {
+                                                                 "openTime":  "2026-04-22T13:00:00.0000000-07:00",
+                                                                 "open":  87.34,
+                                                                 "high":  87.45,
+                                                                 "low":  87.04,
+                                                                 "close":  87.09,
+                                                                 "basis":  87.834,
+                                                                 "upper":  89.105682,
+                                                                 "lower":  86.562318,
+                                                                 "widthPct":  2.9
+                                                             },
+                                                             {
+                                                                 "openTime":  "2026-04-22T14:00:00.0000000-07:00",
+                                                                 "open":  87.09,
+                                                                 "high":  87.6,
+                                                                 "low":  87.07,
+                                                                 "close":  87.53,
+                                                                 "basis":  87.899,
+                                                                 "upper":  88.949807,
+                                                                 "lower":  86.848193,
+                                                                 "widthPct":  2.39
+                                                             },
+                                                             {
+                                                                 "openTime":  "2026-04-22T15:00:00.0000000-07:00",
+                                                                 "open":  87.53,
+                                                                 "high":  87.68,
+                                                                 "low":  87.24,
+                                                                 "close":  87.37,
+                                                                 "basis":  87.8985,
+                                                                 "upper":  88.950304,
+                                                                 "lower":  86.846696,
+                                                                 "widthPct":  2.39
+                                                             },
+                                                             {
+                                                                 "openTime":  "2026-04-22T16:00:00.0000000-07:00",
+                                                                 "open":  87.38,
+                                                                 "high":  87.44,
+                                                                 "low":  86.73,
+                                                                 "close":  86.82,
+                                                                 "basis":  87.878,
+                                                                 "upper":  88.995078,
+                                                                 "lower":  86.760922,
+                                                                 "widthPct":  2.54
+                                                             },
+                                                             {
+                                                                 "openTime":  "2026-04-22T17:00:00.0000000-07:00",
+                                                                 "open":  86.83,
+                                                                 "high":  87.11,
+                                                                 "low":  85.9,
+                                                                 "close":  86.81,
+                                                                 "basis":  87.8655,
+                                                                 "upper":  89.023748,
+                                                                 "lower":  86.707252,
+                                                                 "widthPct":  2.64
+                                                             },
+                                                             {
+                                                                 "openTime":  "2026-04-22T18:00:00.0000000-07:00",
+                                                                 "open":  86.82,
+                                                                 "high":  86.82,
+                                                                 "low":  86.07,
+                                                                 "close":  86.38,
+                                                                 "basis":  87.7855,
+                                                                 "upper":  89.110135,
+                                                                 "lower":  86.460865,
+                                                                 "widthPct":  3.02
+                                                             },
+                                                             {
+                                                                 "openTime":  "2026-04-22T19:00:00.0000000-07:00",
+                                                                 "open":  86.39,
+                                                                 "high":  86.41,
+                                                                 "low":  85.67,
+                                                                 "close":  85.9,
+                                                                 "basis":  87.6845,
+                                                                 "upper":  89.24054,
+                                                                 "lower":  86.12846,
+                                                                 "widthPct":  3.55
+                                                             },
+                                                             {
+                                                                 "openTime":  "2026-04-22T20:00:00.0000000-07:00",
+                                                                 "open":  85.89,
+                                                                 "high":  86.04,
+                                                                 "low":  85.4,
+                                                                 "close":  85.72,
+                                                                 "basis":  87.569,
+                                                                 "upper":  89.334184,
+                                                                 "lower":  85.803816,
+                                                                 "widthPct":  4.03
+                                                             },
+                                                             {
+                                                                 "openTime":  "2026-04-22T21:00:00.0000000-07:00",
+                                                                 "open":  85.71,
+                                                                 "high":  85.85,
+                                                                 "low":  85.59,
+                                                                 "close":  85.71,
+                                                                 "basis":  87.456,
+                                                                 "upper":  89.385719,
+                                                                 "lower":  85.526281,
+                                                                 "widthPct":  4.41
+                                                             }
+                                                         ],
+                                              "support":  85.4,
+                                              "resistance":  89.28,
+                                              "bollingerPeriod":  20,
+                                              "bollingerDeviation":  2,
+                                              "widthPct":  4.41,
+                                              "widthRatio":  1.46,
+                                              "basisSlopePct":  -0.48
+                                          },
+                                "beginnerPlan":  {
+                                                     "style":  "same-day intraday",
+                                                     "entryPrice":  85.71,
+                                                     "stopLossPrice":  86.396,
+                                                     "stopLossPct":  0.8,
+                                                     "takeProfit1Price":  84.819,
+                                                     "takeProfit1Pct":  1.04,
+                                                     "takeProfit2Price":  84.202,
+                                                     "takeProfit2Pct":  1.76,
+                                                     "holdMinHours":  2,
+                                                     "holdMaxHours":  8,
+                                                     "holdWindowLabel":  "2-8h",
+                                                     "partialExitRule":  "If price reaches TP1 on the way down, consider taking 30-50% off. If it reaches TP2, consider closing most or all of the rest.",
+                                                     "timingNote":  "This is designed for a same-day short. If price stops trending lower after the hold window, reduce or close the trade.",
+                                                     "recommendedLeverage":  "2x-3x",
+                                                     "scaleOutGuide":  "Take 30% at TP1, 50% at TP2, and trail the last 20% only if the trend still confirms.",
+                                                     "priceLogic":  "These levels use recent hourly volatility. The stop is about 1R away, TP1 is near 1.3R, and TP2 is near 2.2R.",
+                                                     "leverageNote":  "Conservative in-app heuristic for beginners, not exchange advice.",
+                                                     "starterNote":  "For beginners, do not add to a losing futures position."
+                                                 }
+                            },
+                            {
+                                "symbol":  "LINK-USDT-SWAP",
+                                "direction":  "short",
+                                "biasScore":  73.6,
+                                "edge":  38.7,
+                                "confidence":  77,
+                                "lastPrice":  9.172,
+                                "move6hPct":  -2.07,
+                                "move24hPct":  -3.25,
+                                "fundingRatePct":  -0.0178,
+                                "volumeRatio":  1.12,
+                                "volatilityPct":  0.71,
+                                "reasons":  [
+                                                "6h momentum is slipping at -2.07%",
+                                                "24h trend remains weak at -3.25%",
+                                                "hourly closes were green only 40% of the time"
+                                            ],
+                                "technicalNotes":  [
+                                                       "Price is pressing the lower Bollinger band while the bands expand, which keeps downside continuation in play.",
+                                                       "The Bollinger basis is sloping down by -0.76%, which keeps short-term trend control with sellers.",
+                                                       "Band width is wider than its recent average, which confirms that the current move is active instead of sleepy.",
+                                                       "Recent 24h range support is near 9.135 and resistance is near 9.548."
+                                                   ],
+                                "scoreBreakdown":  [
+                                                       {
+                                                           "key":  "momentumTrend",
+                                                           "label":  "Momentum + trend",
+                                                           "points":  12.1
+                                                       },
+                                                       {
+                                                           "key":  "bollinger",
+                                                           "label":  "Bollinger alignment",
+                                                           "points":  8
+                                                       },
+                                                       {
+                                                           "key":  "marketRegime",
+                                                           "label":  "Market regime",
+                                                           "points":  1.9
+                                                       },
+                                                       {
+                                                           "key":  "opportunity",
+                                                           "label":  "Volume + volatility",
+                                                           "points":  4.2
+                                                       },
+                                                       {
+                                                           "key":  "funding",
+                                                           "label":  "Funding crowding",
+                                                           "points":  -2.7
+                                                       }
+                                                   ],
+                                "thesis":  "LINK-USDT-SWAP is underperforming the broader liquid futures basket and still looks vulnerable to downside continuation if the tape does not recover.",
+                                "invalidation":  "Reassess if price rises above 9.245 or the 6h trend turns back up.",
+                                "chart":  {
+                                              "points":  [
+                                                             {
+                                                                 "openTime":  "2026-04-22T05:00:00.0000000-07:00",
+                                                                 "open":  9.523,
+                                                                 "high":  9.539,
+                                                                 "low":  9.497,
+                                                                 "close":  9.512,
+                                                                 "basis":  9.4348,
+                                                                 "upper":  9.605743,
+                                                                 "lower":  9.263857,
+                                                                 "widthPct":  3.62
+                                                             },
+                                                             {
+                                                                 "openTime":  "2026-04-22T06:00:00.0000000-07:00",
+                                                                 "open":  9.511,
+                                                                 "high":  9.548,
+                                                                 "low":  9.491,
+                                                                 "close":  9.522,
+                                                                 "basis":  9.4439,
+                                                                 "upper":  9.613055,
+                                                                 "lower":  9.274745,
+                                                                 "widthPct":  3.58
+                                                             },
+                                                             {
+                                                                 "openTime":  "2026-04-22T07:00:00.0000000-07:00",
+                                                                 "open":  9.522,
+                                                                 "high":  9.541,
+                                                                 "low":  9.456,
+                                                                 "close":  9.503,
+                                                                 "basis":  9.45245,
+                                                                 "upper":  9.615285,
+                                                                 "lower":  9.289615,
+                                                                 "widthPct":  3.45
+                                                             },
+                                                             {
+                                                                 "openTime":  "2026-04-22T08:00:00.0000000-07:00",
+                                                                 "open":  9.503,
+                                                                 "high":  9.508,
+                                                                 "low":  9.46,
+                                                                 "close":  9.483,
+                                                                 "basis":  9.46345,
+                                                                 "upper":  9.601435,
+                                                                 "lower":  9.325465,
+                                                                 "widthPct":  2.92
+                                                             },
+                                                             {
+                                                                 "openTime":  "2026-04-22T09:00:00.0000000-07:00",
+                                                                 "open":  9.484,
+                                                                 "high":  9.505,
+                                                                 "low":  9.422,
+                                                                 "close":  9.433,
+                                                                 "basis":  9.4673,
+                                                                 "upper":  9.597134,
+                                                                 "lower":  9.337466,
+                                                                 "widthPct":  2.74
+                                                             },
+                                                             {
+                                                                 "openTime":  "2026-04-22T10:00:00.0000000-07:00",
+                                                                 "open":  9.432,
+                                                                 "high":  9.47,
+                                                                 "low":  9.427,
+                                                                 "close":  9.458,
+                                                                 "basis":  9.4732,
+                                                                 "upper":  9.589363,
+                                                                 "lower":  9.357037,
+                                                                 "widthPct":  2.45
+                                                             },
+                                                             {
+                                                                 "openTime":  "2026-04-22T11:00:00.0000000-07:00",
+                                                                 "open":  9.459,
+                                                                 "high":  9.482,
+                                                                 "low":  9.44,
+                                                                 "close":  9.441,
+                                                                 "basis":  9.48055,
+                                                                 "upper":  9.564589,
+                                                                 "lower":  9.396511,
+                                                                 "widthPct":  1.77
+                                                             },
+                                                             {
+                                                                 "openTime":  "2026-04-22T12:00:00.0000000-07:00",
+                                                                 "open":  9.441,
+                                                                 "high":  9.442,
+                                                                 "low":  9.369,
+                                                                 "close":  9.41,
+                                                                 "basis":  9.4814,
+                                                                 "upper":  9.56216,
+                                                                 "lower":  9.40064,
+                                                                 "widthPct":  1.7
+                                                             },
+                                                             {
+                                                                 "openTime":  "2026-04-22T13:00:00.0000000-07:00",
+                                                                 "open":  9.41,
+                                                                 "high":  9.413,
+                                                                 "low":  9.364,
+                                                                 "close":  9.367,
+                                                                 "basis":  9.4793,
+                                                                 "upper":  9.569153,
+                                                                 "lower":  9.389447,
+                                                                 "widthPct":  1.9
+                                                             },
+                                                             {
+                                                                 "openTime":  "2026-04-22T14:00:00.0000000-07:00",
+                                                                 "open":  9.366,
+                                                                 "high":  9.412,
+                                                                 "low":  9.364,
+                                                                 "close":  9.407,
+                                                                 "basis":  9.47985,
+                                                                 "upper":  9.567771,
+                                                                 "lower":  9.391929,
+                                                                 "widthPct":  1.85
+                                                             },
+                                                             {
+                                                                 "openTime":  "2026-04-22T15:00:00.0000000-07:00",
+                                                                 "open":  9.407,
+                                                                 "high":  9.413,
+                                                                 "low":  9.353,
+                                                                 "close":  9.366,
+                                                                 "basis":  9.47285,
+                                                                 "upper":  9.572799,
+                                                                 "lower":  9.372901,
+                                                                 "widthPct":  2.11
+                                                             },
+                                                             {
+                                                                 "openTime":  "2026-04-22T16:00:00.0000000-07:00",
+                                                                 "open":  9.366,
+                                                                 "high":  9.369,
+                                                                 "low":  9.275,
+                                                                 "close":  9.283,
+                                                                 "basis":  9.4619,
+                                                                 "upper":  9.590542,
+                                                                 "lower":  9.333258,
+                                                                 "widthPct":  2.72
+                                                             },
+                                                             {
+                                                                 "openTime":  "2026-04-22T17:00:00.0000000-07:00",
+                                                                 "open":  9.284,
+                                                                 "high":  9.309,
+                                                                 "low":  9.173,
+                                                                 "close":  9.286,
+                                                                 "basis":  9.4522,
+                                                                 "upper":  9.601515,
+                                                                 "lower":  9.302885,
+                                                                 "widthPct":  3.16
+                                                             },
+                                                             {
+                                                                 "openTime":  "2026-04-22T18:00:00.0000000-07:00",
+                                                                 "open":  9.287,
+                                                                 "high":  9.287,
+                                                                 "low":  9.214,
+                                                                 "close":  9.242,
+                                                                 "basis":  9.43835,
+                                                                 "upper":  9.610024,
+                                                                 "lower":  9.266676,
+                                                                 "widthPct":  3.64
+                                                             },
+                                                             {
+                                                                 "openTime":  "2026-04-22T19:00:00.0000000-07:00",
+                                                                 "open":  9.241,
+                                                                 "high":  9.241,
+                                                                 "low":  9.162,
+                                                                 "close":  9.193,
+                                                                 "basis":  9.42255,
+                                                                 "upper":  9.621333,
+                                                                 "lower":  9.223767,
+                                                                 "widthPct":  4.22
+                                                             },
+                                                             {
+                                                                 "openTime":  "2026-04-22T20:00:00.0000000-07:00",
+                                                                 "open":  9.193,
+                                                                 "high":  9.207,
+                                                                 "low":  9.135,
+                                                                 "close":  9.172,
+                                                                 "basis":  9.40635,
+                                                                 "upper":  9.629825,
+                                                                 "lower":  9.182875,
+                                                                 "widthPct":  4.75
+                                                             },
+                                                             {
+                                                                 "openTime":  "2026-04-22T21:00:00.0000000-07:00",
+                                                                 "open":  9.171,
+                                                                 "high":  9.183,
+                                                                 "low":  9.159,
+                                                                 "close":  9.172,
+                                                                 "basis":  9.3897,
+                                                                 "upper":  9.630261,
+                                                                 "lower":  9.149139,
+                                                                 "widthPct":  5.12
+                                                             }
+                                                         ],
+                                              "support":  9.135,
+                                              "resistance":  9.548,
+                                              "bollingerPeriod":  20,
+                                              "bollingerDeviation":  2,
+                                              "widthPct":  5.12,
+                                              "widthRatio":  1.84,
+                                              "basisSlopePct":  -0.76
+                                          },
+                                "beginnerPlan":  {
+                                                     "style":  "same-day intraday",
+                                                     "entryPrice":  9.172,
+                                                     "stopLossPrice":  9.245,
+                                                     "stopLossPct":  0.8,
+                                                     "takeProfit1Price":  9.077,
+                                                     "takeProfit1Pct":  1.04,
+                                                     "takeProfit2Price":  9.011,
+                                                     "takeProfit2Pct":  1.76,
+                                                     "holdMinHours":  2,
+                                                     "holdMaxHours":  8,
+                                                     "holdWindowLabel":  "2-8h",
+                                                     "partialExitRule":  "If price reaches TP1 on the way down, consider taking 30-50% off. If it reaches TP2, consider closing most or all of the rest.",
+                                                     "timingNote":  "This is designed for a same-day short. If price stops trending lower after the hold window, reduce or close the trade.",
+                                                     "recommendedLeverage":  "2x-3x",
+                                                     "scaleOutGuide":  "Take 30% at TP1, 50% at TP2, and trail the last 20% only if the trend still confirms.",
+                                                     "priceLogic":  "These levels use recent hourly volatility. The stop is about 1R away, TP1 is near 1.3R, and TP2 is near 2.2R.",
+                                                     "leverageNote":  "Conservative in-app heuristic for beginners, not exchange advice.",
+                                                     "starterNote":  "For beginners, do not add to a losing futures position."
+                                                 }
+                            }
+                        ],
+    "headlines":  [
+                      {
+                          "source":  "Cointelegraph",
+                          "title":  "Phishing, deepfakes, supply chain attacks to fuel 2026\u0027s biggest crypto hacks: CertiK",
+                          "link":  "System.Xml.XmlElement",
+                          "published":  "2026-04-23T05:11:58.0000000+01:00",
+                          "publishedLocal":  "2026-04-22T21:11:58.0000000-07:00",
+                          "sentimentLabel":  "Neutral"
+                      },
+                      {
+                          "source":  "Cointelegraph",
+                          "title":  "Kalshi bans 3 US politicians for betting on their own election races",
+                          "link":  "System.Xml.XmlElement",
+                          "published":  "2026-04-23T03:38:19.0000000+01:00",
+                          "publishedLocal":  "2026-04-22T19:38:19.0000000-07:00",
+                          "sentimentLabel":  "Neutral"
+                      },
+                      {
+                          "source":  "Cointelegraph",
+                          "title":  "New York, Illinois sign EO banning state employees from prediction markets",
+                          "link":  "System.Xml.XmlElement",
+                          "published":  "2026-04-23T02:53:56.0000000+01:00",
+                          "publishedLocal":  "2026-04-22T18:53:56.0000000-07:00",
+                          "sentimentLabel":  "Neutral"
+                      },
+                      {
+                          "source":  "Cointelegraph",
+                          "title":  "LONGITUDE recap: Adam Back on Satoshi, crypto regulation needs tweaks",
+                          "link":  "System.Xml.XmlElement",
+                          "published":  "2026-04-23T01:30:34.0000000+01:00",
+                          "publishedLocal":  "2026-04-22T17:30:34.0000000-07:00",
+                          "sentimentLabel":  "Neutral"
+                      }
+                  ],
+    "warnings":  [
+                     "No long setups cleared the minimum quality filter in this run."
+                 ],
+    "methodology":  {
+                        "factors":  [
+                                        "24h and 6h momentum",
+                                        "hourly trend persistence",
+                                        "volume expansion",
+                                        "Bollinger band location and basis slope",
+                                        "funding crowding",
+                                        "BTC and ETH regime strength",
+                                        "liquid-pair breadth",
+                                        "headline sentiment"
+                                    ]
+                    },
+    "disclaimer":  "This report is a probability-weighted watchlist helper for crypto futures sessions. It is not financial advice and should not be used as automatic execution logic."
+}

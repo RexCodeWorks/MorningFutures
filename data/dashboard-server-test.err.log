@@ -1,0 +1,7 @@
+New-Object : Exception calling ".ctor" with "0" argument(s): "Operation is not supported on this platform."
+At C:\Users\matti\OneDrive\??\Projects\MorningFutures\scripts\Start-MorningFuturesDashboard.ps1:47 char:13
++ $listener = New-Object System.Net.HttpListener
++             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [New-Object], MethodInvocationException
+    + FullyQualifiedErrorId : ConstructorInvokedThrowException,Microsoft.PowerShell.Commands.NewObjectCommand
+ 

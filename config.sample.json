@@ -1,0 +1,42 @@
+{
+  "UniverseSize": 15,
+  "TopPicks": 3,
+  "MinQuoteVolumeUsd": 30000000,
+  "KlineLookbackHours": 36,
+  "PreferredSymbols": [
+    "BTC-USDT-SWAP",
+    "ETH-USDT-SWAP",
+    "SOL-USDT-SWAP",
+    "BNB-USDT-SWAP",
+    "XRP-USDT-SWAP",
+    "DOGE-USDT-SWAP",
+    "ADA-USDT-SWAP",
+    "SUI-USDT-SWAP",
+    "AVAX-USDT-SWAP",
+    "LINK-USDT-SWAP",
+    "LTC-USDT-SWAP",
+    "TRX-USDT-SWAP",
+    "DOT-USDT-SWAP",
+    "BCH-USDT-SWAP",
+    "TON-USDT-SWAP"
+  ],
+  "NewsSources": [
+    {
+      "Name": "CoinDesk",
+      "RssUrl": "https://www.coindesk.com/arc/outboundfeeds/rss/"
+    },
+    {
+      "Name": "Cointelegraph",
+      "RssUrl": "https://cointelegraph.com/rss"
+    }
+  ],
+  "Telegram": {
+    "Enabled": false,
+    "BotToken": "",
+    "ChatId": ""
+  },
+  "Discord": {
+    "Enabled": false,
+    "WebhookUrl": ""
+  }
+}

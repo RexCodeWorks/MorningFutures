@@ -1,0 +1,1889 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Morning Futures</title>
+  <style>
+    :root {
+      --bg: #f5efe3;
+      --panel: rgba(255, 249, 239, 0.82);
+      --ink: #182128;
+      --muted: #5f6a73;
+      --line: rgba(24, 33, 40, 0.12);
+      --accent: #e26d34;
+      --accent-soft: rgba(226, 109, 52, 0.14);
+      --long: #1f7a55;
+      --long-soft: rgba(31, 122, 85, 0.12);
+      --short: #9b2c2c;
+      --short-soft: rgba(155, 44, 44, 0.12);
+      --shadow: 0 20px 60px rgba(40, 31, 17, 0.12);
+      --radius: 24px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top left, rgba(226, 109, 52, 0.25), transparent 32%),
+        radial-gradient(circle at top right, rgba(31, 122, 85, 0.16), transparent 28%),
+        linear-gradient(180deg, #fcf6ea 0%, #f0e5d4 100%);
+      color: var(--ink);
+      font-family: "Aptos", "Bahnschrift", "Segoe UI Variable", sans-serif;
+    }
+
+    .page {
+      width: min(1180px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 28px 0 48px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.3fr 0.7fr;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+    }
+
+    .hero-card {
+      padding: 28px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .hero-card::after {
+      content: "";
+      position: absolute;
+      inset: auto -40px -50px auto;
+      width: 180px;
+      height: 180px;
+      border-radius: 999px;
+      background: rgba(226, 109, 52, 0.08);
+      filter: blur(10px);
+    }
+
+    .hero-topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(24, 33, 40, 0.06);
+      color: var(--muted);
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .lang-switch {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px;
+      border-radius: 999px;
+      background: rgba(24, 33, 40, 0.06);
+    }
+
+    .lang-button {
+      appearance: none;
+      border: 0;
+      border-radius: 999px;
+      padding: 8px 12px;
+      background: transparent;
+      color: var(--muted);
+      font: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+
+    .lang-button.is-active {
+      background: #182128;
+      color: #fffaf0;
+    }
+
+    h1 {
+      margin: 14px 0 10px;
+      font-size: clamp(32px, 5vw, 56px);
+      line-height: 0.96;
+      letter-spacing: -0.05em;
+    }
+
+    .subcopy {
+      max-width: 58ch;
+      color: var(--muted);
+      line-height: 1.6;
+      font-size: 15px;
+    }
+
+    .hero-actions {
+      margin-top: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .refresh-button {
+      appearance: none;
+      border: 0;
+      border-radius: 999px;
+      padding: 12px 18px;
+      background: linear-gradient(135deg, #182128 0%, #2a3a46 100%);
+      color: #fffaf0;
+      font: inherit;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      cursor: pointer;
+      box-shadow: 0 16px 30px rgba(24, 33, 40, 0.18);
+      transition: transform 160ms ease, box-shadow 160ms ease, opacity 160ms ease;
+    }
+
+    .refresh-button:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 18px 36px rgba(24, 33, 40, 0.24);
+    }
+
+    .refresh-button:disabled {
+      opacity: 0.65;
+      cursor: wait;
+      transform: none;
+      box-shadow: 0 10px 20px rgba(24, 33, 40, 0.1);
+    }
+
+    .refresh-status {
+      min-height: 24px;
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(24, 33, 40, 0.06);
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .refresh-status.is-busy {
+      color: var(--accent);
+      background: rgba(226, 109, 52, 0.12);
+    }
+
+    .refresh-status.is-success {
+      color: var(--long);
+      background: rgba(31, 122, 85, 0.12);
+    }
+
+    .refresh-status.is-error {
+      color: var(--short);
+      background: rgba(155, 44, 44, 0.12);
+    }
+
+    .meta-list {
+      display: grid;
+      gap: 14px;
+      align-content: start;
+      padding: 24px;
+    }
+
+    .metric {
+      padding: 18px;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.38);
+    }
+
+    .metric-label {
+      font-size: 12px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 8px;
+    }
+
+    .metric-value {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.04em;
+    }
+
+    .metric-note {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .warning-panel {
+      margin-bottom: 20px;
+      padding: 18px 24px;
+      border-radius: 24px;
+      border: 1px solid rgba(155, 44, 44, 0.18);
+      background: rgba(155, 44, 44, 0.08);
+      box-shadow: var(--shadow);
+    }
+
+    .warning-panel[hidden] {
+      display: none;
+    }
+
+    .warning-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .warning-title {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: var(--short);
+    }
+
+    .warning-copy {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .warning-list {
+      margin: 12px 0 0;
+      padding-left: 18px;
+      display: grid;
+      gap: 8px;
+      color: var(--ink);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .section {
+      padding: 24px;
+    }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .section-head h2,
+    .section-head h3 {
+      margin: 0;
+      font-size: 24px;
+      letter-spacing: -0.04em;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 68px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .pill.long {
+      color: var(--long);
+      background: var(--long-soft);
+    }
+
+    .pill.short {
+      color: var(--short);
+      background: var(--short-soft);
+    }
+
+    .pill.market {
+      color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    .candidate-list,
+    .headline-list,
+    .summary-list {
+      display: grid;
+      gap: 14px;
+    }
+
+    .candidate {
+      border-radius: 20px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.48);
+      padding: 18px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .candidate-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 14px;
+    }
+
+    .symbol {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.04em;
+    }
+
+    .thesis {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.6;
+      font-size: 14px;
+    }
+
+    .score-stack {
+      text-align: right;
+    }
+
+    .score-value {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.05em;
+    }
+
+    .score-note {
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .chip {
+      padding: 8px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      background: rgba(24, 33, 40, 0.06);
+      color: var(--ink);
+    }
+
+    .analysis-block {
+      display: grid;
+      gap: 10px;
+      padding: 14px;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: rgba(24, 33, 40, 0.03);
+    }
+
+    .analysis-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .analysis-title {
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .analysis-meta {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .chart-frame {
+      padding: 8px;
+      border-radius: 16px;
+      border: 1px solid rgba(24, 33, 40, 0.08);
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.82) 0%, rgba(255, 248, 237, 0.94) 100%);
+      overflow: hidden;
+    }
+
+    .mini-chart {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .chart-grid {
+      stroke: rgba(24, 33, 40, 0.08);
+      stroke-width: 1;
+    }
+
+    .chart-band-upper,
+    .chart-band-basis,
+    .chart-band-lower {
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .chart-band-upper {
+      stroke: rgba(226, 109, 52, 0.9);
+      stroke-width: 2;
+    }
+
+    .chart-band-basis {
+      stroke: rgba(24, 33, 40, 0.48);
+      stroke-width: 1.6;
+      stroke-dasharray: 5 5;
+    }
+
+    .chart-band-lower {
+      stroke: rgba(31, 122, 85, 0.9);
+      stroke-width: 2;
+    }
+
+    .chart-wick {
+      stroke: rgba(24, 33, 40, 0.34);
+      stroke-width: 1.25;
+      stroke-linecap: round;
+    }
+
+    .chart-candle-up {
+      fill: rgba(31, 122, 85, 0.8);
+    }
+
+    .chart-candle-down {
+      fill: rgba(155, 44, 44, 0.8);
+    }
+
+    .chart-level {
+      stroke-width: 1.35;
+      stroke-dasharray: 6 5;
+    }
+
+    .chart-level.support {
+      stroke: rgba(31, 122, 85, 0.62);
+    }
+
+    .chart-level.resistance {
+      stroke: rgba(155, 44, 44, 0.5);
+    }
+
+    .chart-level.entry {
+      stroke: rgba(24, 33, 40, 0.38);
+    }
+
+    .chart-level.stop {
+      stroke: rgba(155, 44, 44, 0.82);
+    }
+
+    .chart-level.tp {
+      stroke: rgba(31, 122, 85, 0.82);
+    }
+
+    .driver-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .driver-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.56);
+      border: 1px solid rgba(24, 33, 40, 0.06);
+    }
+
+    .driver-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--ink);
+    }
+
+    .driver-value {
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .driver-value.is-positive {
+      color: var(--long);
+    }
+
+    .driver-value.is-negative {
+      color: var(--short);
+    }
+
+    .note-list {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted);
+      display: grid;
+      gap: 6px;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .reason-list {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted);
+      display: grid;
+      gap: 6px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .plan-block {
+      display: grid;
+      gap: 12px;
+      padding: 14px;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: rgba(24, 33, 40, 0.04);
+    }
+
+    .plan-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .plan-title {
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .plan-style {
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .plan-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .plan-item {
+      padding: 12px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.56);
+      border: 1px solid rgba(24, 33, 40, 0.08);
+    }
+
+    .plan-label {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .plan-value {
+      display: block;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+    }
+
+    .plan-note {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .headline,
+    .summary-item {
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.38);
+      padding: 16px;
+    }
+
+    .headline a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .headline a:hover {
+      text-decoration: underline;
+    }
+
+    .headline-top,
+    .summary-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .headline-title,
+    .summary-title {
+      font-weight: 700;
+      line-height: 1.4;
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .footer {
+      padding: 22px 24px;
+      color: var(--muted);
+      line-height: 1.6;
+      font-size: 14px;
+    }
+
+    .empty {
+      padding: 20px;
+      border-radius: 18px;
+      background: rgba(24, 33, 40, 0.04);
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    @media (max-width: 920px) {
+      .hero,
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .page {
+        width: min(100vw - 20px, 1180px);
+        padding-top: 18px;
+      }
+
+      .hero-card,
+      .section,
+      .meta-list,
+      .footer {
+        padding: 18px;
+      }
+
+      .candidate-top,
+      .headline-top,
+      .summary-top,
+      .section-head,
+      .hero-topbar,
+      .warning-head {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .score-stack {
+        text-align: left;
+      }
+
+      .plan-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <section class="hero">
+      <article class="panel hero-card">
+        <div class="hero-topbar">
+          <div class="eyebrow" id="sample-badge">Morning Brief</div>
+          <div class="lang-switch" role="group" aria-label="Language selector">
+            <button class="lang-button" id="lang-en" data-lang="en" type="button">EN</button>
+            <button class="lang-button" id="lang-ko" data-lang="ko" type="button">KO</button>
+          </div>
+        </div>
+        <h1 id="hero-title">Morning Futures Pulse</h1>
+        <p class="subcopy" id="hero-copy">
+          Loading the latest market pulse...
+        </p>
+        <div class="hero-actions">
+          <button class="refresh-button" id="refresh-button" type="button">Refresh Live Data</button>
+          <div class="refresh-status" id="refresh-status">Dashboard is reading the latest saved report.</div>
+        </div>
+      </article>
+
+      <aside class="panel meta-list">
+        <div class="metric">
+          <div class="metric-label" id="regime-label">Market Regime</div>
+          <div class="metric-value" id="regime-value">...</div>
+          <div class="metric-note" id="regime-note">Waiting for report data.</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label" id="fear-label">Fear And Greed</div>
+          <div class="metric-value" id="fear-value">...</div>
+          <div class="metric-note" id="fear-note">Waiting for report data.</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label" id="generated-label">Generated</div>
+          <div class="metric-value" id="generated-value">...</div>
+          <div class="metric-note" id="generated-note">Latest saved briefing.</div>
+        </div>
+      </aside>
+    </section>
+
+    <section class="warning-panel" id="warning-panel" hidden>
+      <div class="warning-head">
+        <div class="warning-title" id="warning-title">Warnings</div>
+        <span class="pill short" id="warning-pill">Review</span>
+      </div>
+      <div class="warning-copy" id="warning-copy">The latest refresh included notes worth reviewing before acting on the watchlist.</div>
+      <ul class="warning-list" id="warning-list"></ul>
+    </section>
+
+    <section class="grid">
+      <article class="panel section">
+        <div class="section-head">
+          <h2 id="long-title">Long Watchlist</h2>
+          <span class="pill long" id="long-pill">Long Bias</span>
+        </div>
+        <div class="candidate-list" id="long-list"></div>
+      </article>
+
+      <article class="panel section">
+        <div class="section-head">
+          <h2 id="short-title">Short Watchlist</h2>
+          <span class="pill short" id="short-pill">Short Bias</span>
+        </div>
+        <div class="candidate-list" id="short-list"></div>
+      </article>
+    </section>
+
+    <section class="grid">
+      <article class="panel section">
+        <div class="section-head">
+          <h3 id="summary-title-head">Market Summary</h3>
+          <span class="pill market" id="summary-pill">Context</span>
+        </div>
+        <div class="summary-list" id="summary-list"></div>
+      </article>
+
+      <article class="panel section">
+        <div class="section-head">
+          <h3 id="headline-title-head">Headline Tape</h3>
+          <span class="pill market" id="headline-pill">News</span>
+        </div>
+        <div class="headline-list" id="headline-list"></div>
+      </article>
+    </section>
+
+    <section class="panel footer" id="footer-note">
+      The report is a probability-weighted market brief. Use it as a curated watchlist, not as automatic execution logic.
+    </section>
+  </div>
+
+  <script src="./app.js"></script>
+  <script>
+    if (!window.__MORNING_FUTURES_APP_LOADED__) {
+    const refreshButton = document.getElementById("refresh-button");
+    const refreshStatus = document.getElementById("refresh-status");
+    const heroTitle = document.getElementById("hero-title");
+    const sampleBadge = document.getElementById("sample-badge");
+    const warningPanel = document.getElementById("warning-panel");
+    const warningTitle = document.getElementById("warning-title");
+    const warningPill = document.getElementById("warning-pill");
+    const warningCopy = document.getElementById("warning-copy");
+    const warningList = document.getElementById("warning-list");
+    const regimeLabel = document.getElementById("regime-label");
+    const fearLabel = document.getElementById("fear-label");
+    const generatedLabel = document.getElementById("generated-label");
+    const longTitle = document.getElementById("long-title");
+    const longPill = document.getElementById("long-pill");
+    const shortTitle = document.getElementById("short-title");
+    const shortPill = document.getElementById("short-pill");
+    const summaryTitleHead = document.getElementById("summary-title-head");
+    const summaryPill = document.getElementById("summary-pill");
+    const headlineTitleHead = document.getElementById("headline-title-head");
+    const headlinePill = document.getElementById("headline-pill");
+    const languageButtons = [...document.querySelectorAll(".lang-button")];
+
+    const I18N = {
+      en: {
+        heroTitle: "Morning Futures Pulse",
+        refreshButton: "Refresh Live Data",
+        refreshingButton: "Refreshing...",
+        badgeLive: "Live Brief",
+        badgeSample: "Sample Brief",
+        statusReading: "Dashboard is reading the latest saved report.",
+        statusBusy: "Pulling market data and rebuilding the report...",
+        statusUpdated: "Live report updated.",
+        statusUpdatedWarnings_one: "Live report updated with 1 warning.",
+        statusUpdatedWarningDetail: "Live report updated. Warning: {warning}",
+        statusUpdatedWarnings_many: "Live report updated with {count} warnings. Review them below.",
+        statusNoReport: "No saved report was found yet. Use the refresh button to build one.",
+        statusErrorPrefix: "Refresh failed",
+        warningTitle: "Warnings",
+        warningPill_one: "1 note",
+        warningPill_many: "{count} notes",
+        warningCopy_one: "The latest refresh included one note worth reviewing before acting on the watchlist.",
+        warningCopy_many: "The latest refresh included {count} notes worth reviewing before acting on the watchlist.",
+        marketRegime: "Market Regime",
+        fearGreed: "Fear And Greed",
+        generated: "Generated",
+        longTitle: "Long Watchlist",
+        shortTitle: "Short Watchlist",
+        longPill: "Long Bias",
+        shortPill: "Short Bias",
+        summaryTitle: "Market Summary",
+        summaryPill: "Context",
+        headlineTitle: "Headline Tape",
+        headlinePill: "News",
+        noReportHero: "No report file is available yet. Use the refresh button to generate the first live report.",
+        noLongs: "No long watchlist names were produced in the latest run.",
+        noShorts: "No short watchlist names were produced in the latest run.",
+        noSummary: "The dashboard is waiting for a JSON report.",
+        noHeadlines: "Headlines will appear after the first successful update.",
+        noHeadlinesLive: "No headlines were captured in the latest run.",
+        reportFallback: "The report compares liquid futures pairs, measures intraday pressure, then highlights likely long and short watchlist names for the session.",
+        regimeNote: "Regime score {score} with {breadth}% positive breadth.",
+        fearUnavailable: "Fear and Greed feed unavailable.",
+        generatedMissing: "No saved timestamp found.",
+        generatedLatest: "Latest saved briefing.",
+        scoreSuffixLong: "long score",
+        scoreSuffixShort: "short score",
+        chipPrice: "Price",
+        chipMove6h: "6h",
+        chipMove24h: "24h",
+        chipFunding: "Funding",
+        chipVolume: "Volume",
+        chipConfidence: "Confidence",
+        chipBandWidth: "Band width",
+        planTitle: "Simple Plan",
+        planCurrentPrice: "Current Price",
+        planHoldWindow: "Hold Window",
+        planTp1: "Take Profit 1",
+        planTp2: "Take Profit 2",
+        planStopLoss: "Stop Loss",
+        planLeverage: "Leverage",
+        planExitStyle: "Exit Style",
+        planExitStyleLong: "Scale out",
+        planExitStyleShort: "Cover in parts",
+        planMoveFromHere: "{value} from here",
+        planRiskBudget: "{value} risk budget",
+        planScaleOut: "Scale-Out Guide",
+        planLogic: "Why these prices",
+        planStarter: "Beginner note",
+        invalidationLabel: "Invalidate if:",
+        reasonsFallback: "No supporting notes were included for this candidate.",
+        summaryBreadthTitle: "Breadth and regime",
+        summaryBroadTitle: "Broad market breadth",
+        summaryBroadBody: "{breadth}% of tracked liquid pairs are green.",
+        summaryWeakTitle: "Weakest liquid names",
+        summaryWeakBody: "These are lagging across the tracked futures universe.",
+        summaryWeakFallback: "Not enough laggard data yet.",
+        chartTitle: "Chart View",
+        chartMeta: "Last 24h · Bollinger({period},{deviation})",
+        scoreDriversTitle: "Score Drivers",
+        technicalReadTitle: "Technical Read",
+        driverMomentumTrend: "Momentum + trend",
+        driverBollinger: "Bollinger alignment",
+        driverMarketRegime: "Market regime",
+        driverOpportunity: "Volume + volatility",
+        driverFunding: "Funding crowding",
+        levelSupport: "Support",
+        levelResistance: "Resistance",
+        levelEntry: "Entry",
+        levelStop: "Stop",
+        levelTp1: "TP1",
+        levelTp2: "TP2",
+        footerFallback: "Use this as a watchlist helper, not as financial advice."
+      },
+      ko: {
+        heroTitle: "모닝 선물 브리프",
+        refreshButton: "실시간 데이터 새로고침",
+        refreshingButton: "새로고침 중...",
+        badgeLive: "실시간 브리프",
+        badgeSample: "샘플 브리프",
+        statusReading: "대시보드가 최신 저장 리포트를 불러오는 중입니다.",
+        statusBusy: "시장 데이터를 다시 받아 리포트를 새로 만드는 중입니다...",
+        statusUpdated: "실시간 리포트가 갱신되었습니다.",
+        statusUpdatedWarnings_one: "실시간 리포트가 갱신됐고 경고가 1개 있었습니다.",
+        statusUpdatedWarningDetail: "실시간 리포트가 갱신됐습니다. 경고: {warning}",
+        statusUpdatedWarnings_many: "실시간 리포트가 갱신됐고 경고가 {count}개 있었습니다. 아래 내용을 확인해주세요.",
+        statusNoReport: "아직 저장된 리포트가 없습니다. 새로고침 버튼으로 첫 리포트를 만들어보세요.",
+        statusErrorPrefix: "새로고침 실패",
+        warningTitle: "경고",
+        warningPill_one: "1개 메모",
+        warningPill_many: "{count}개 메모",
+        warningCopy_one: "가장 최신 갱신에서 확인해두면 좋을 메모가 1개 있습니다.",
+        warningCopy_many: "가장 최신 갱신에서 확인해두면 좋을 메모가 {count}개 있습니다.",
+        marketRegime: "시장 분위기",
+        fearGreed: "공포 탐욕 지수",
+        generated: "생성 시각",
+        longTitle: "롱 감시 종목",
+        shortTitle: "숏 감시 종목",
+        longPill: "롱 우위",
+        shortPill: "숏 우위",
+        summaryTitle: "시장 요약",
+        summaryPill: "맥락",
+        headlineTitle: "헤드라인",
+        headlinePill: "뉴스",
+        noReportHero: "아직 리포트 파일이 없습니다. 새로고침 버튼으로 첫 실시간 리포트를 생성해보세요.",
+        noLongs: "이번 갱신에서는 기준을 통과한 롱 후보가 없었습니다.",
+        noShorts: "이번 갱신에서는 기준을 통과한 숏 후보가 없었습니다.",
+        noSummary: "대시보드는 JSON 리포트를 기다리고 있습니다.",
+        noHeadlines: "첫 갱신이 완료되면 뉴스가 여기에 표시됩니다.",
+        noHeadlinesLive: "이번 갱신에서는 헤드라인을 가져오지 못했습니다.",
+        reportFallback: "이 리포트는 유동성 있는 선물 종목의 장중 압력을 비교해서 오늘 볼 만한 롱과 숏 후보를 추려냅니다.",
+        regimeNote: "시장 점수 {score}, 상승 폭은 {breadth}%입니다.",
+        fearUnavailable: "공포 탐욕 지수를 가져오지 못했습니다.",
+        generatedMissing: "저장된 시각이 없습니다.",
+        generatedLatest: "마지막으로 저장된 브리프 시각입니다.",
+        scoreSuffixLong: "롱 점수",
+        scoreSuffixShort: "숏 점수",
+        chipPrice: "현재가",
+        chipMove6h: "6시간",
+        chipMove24h: "24시간",
+        chipFunding: "펀딩비",
+        chipVolume: "거래량",
+        chipConfidence: "신뢰도",
+        planTitle: "초보자용 계획",
+        planCurrentPrice: "현재가",
+        planHoldWindow: "권장 보유",
+        planTp1: "1차 익절",
+        planTp2: "2차 익절",
+        planStopLoss: "손절 기준",
+        planLeverage: "권장 레버리지",
+        planExitStyle: "정리 방식",
+        planExitStyleLong: "분할 익절",
+        planExitStyleShort: "분할 청산",
+        planMoveFromHere: "현재가 대비 {value}",
+        planRiskBudget: "위험 범위 {value}",
+        planScaleOut: "분할 정리 가이드",
+        planLogic: "이 가격을 잡은 이유",
+        planStarter: "초보자 메모",
+        invalidationLabel: "무효화 조건:",
+        reasonsFallback: "이번 후보에 대한 보조 설명이 포함되지 않았습니다.",
+        summaryBreadthTitle: "시장 강도와 분위기",
+        summaryBroadTitle: "시장 전반 상승 폭",
+        summaryBroadBody: "추적 중인 유동성 종목의 {breadth}%가 상승 중입니다.",
+        summaryWeakTitle: "상대적으로 약한 종목",
+        summaryWeakBody: "추적 중인 종목 가운데 상대적으로 약한 이름들입니다.",
+        summaryWeakFallback: "약세 종목 데이터가 아직 충분하지 않습니다.",
+        footerFallback: "이 화면은 감시 보조 도구로 활용하고, 투자 조언처럼 받아들이지 않는 편이 좋습니다."
+      }
+    };
+
+    let currentLang = localStorage.getItem("morning-futures-lang") === "ko" ? "ko" : "en";
+    let currentReport = null;
+    let isRefreshing = false;
+    let statusModel = { type: "reading" };
+
+    const t = (key, vars = {}) => {
+      const template = I18N[currentLang][key] ?? I18N.en[key] ?? key;
+      return template.replace(/\{(\w+)\}/g, (_, token) => vars[token] ?? "");
+    };
+
+    const localeTag = () => currentLang === "ko" ? "ko-KR" : "en-US";
+
+    const translateDynamicText = (key, value) => {
+      if (currentLang !== "ko" || !value) {
+        return value;
+      }
+
+      const stringValue = String(value);
+      const exactByKey = {
+        regimeLabel: {
+          "Constructive Risk-On": "강한 위험선호",
+          "Mild Risk-On": "완만한 위험선호",
+          "Defensive Risk-Off": "방어적 위험회피",
+          "Mild Risk-Off": "완만한 위험회피",
+          "Mixed / Rotation": "혼조 / 순환장"
+        },
+        label: {
+          "Extreme Fear": "극도의 공포",
+          "Fear": "공포",
+          "Neutral": "중립",
+          "Greed": "탐욕",
+          "Extreme Greed": "극도의 탐욕"
+        },
+        sentimentLabel: {
+          "Bullish": "강세",
+          "Bearish": "약세",
+          "Neutral": "중립"
+        },
+        summary: {
+          "BTC and ETH are holding up, breadth is constructive across liquid pairs, and the session leans toward continuation setups rather than broad panic fades.": "BTC와 ETH가 버텨주고 있고, 유동성 있는 종목 전반의 상승 폭도 괜찮아서 오늘 세션은 급락 반등보다는 추세 지속 쪽을 더 우선해서 볼 만합니다.",
+          "Broad risk appetite is soft enough that downside continuation and failed bounce setups deserve extra attention.": "전반적인 위험선호가 약한 편이라 하락 지속이나 반등 실패 패턴을 더 조심해서 볼 필요가 있습니다.",
+          "The tape is balanced enough that relative strength and relative weakness matter more than making an all-market directional call.": "시장 전체 방향을 단정하기보다는 종목별 상대강도와 상대약세를 구분해서 보는 편이 더 중요합니다.",
+          "The market is mixed.": "시장이 뚜렷한 한 방향보다는 혼조에 가깝습니다."
+        },
+        style: {
+          "same-day intraday": "당일 장중 대응"
+        },
+        partialExitRule: {
+          "If price reaches TP1, consider taking 30-50% off. If it reaches TP2, consider closing most or all of the rest.": "가격이 1차 목표가에 닿으면 30~50% 정도 먼저 정리하고, 2차 목표가에 닿으면 남은 물량 대부분을 정리하는 쪽이 무난합니다.",
+          "If price reaches TP1 on the way down, consider taking 30-50% off. If it reaches TP2, consider closing most or all of the rest.": "가격이 1차 목표가까지 내려오면 30~50% 정도 먼저 정리하고, 2차 목표가까지 내려오면 남은 물량 대부분을 정리하는 쪽이 무난합니다."
+        },
+        timingNote: {
+          "This is designed for a same-day long. If price is still drifting sideways after the hold window, reduce or close the trade.": "이 계획은 당일용 롱 기준입니다. 권장 보유 시간이 지나도 가격이 횡보만 하면 비중을 줄이거나 정리하는 편이 좋습니다.",
+          "This is designed for a same-day short. If price stops trending lower after the hold window, reduce or close the trade.": "이 계획은 당일용 숏 기준입니다. 권장 보유 시간이 지나도 하락이 이어지지 않으면 비중을 줄이거나 정리하는 편이 좋습니다."
+        },
+        scaleOutGuide: {
+          "Take 40% at TP1, 40% at TP2, and only leave the last 20% open if momentum still looks healthy.": "1차 목표가에서 40%, 2차 목표가에서 40%를 정리하고, 마지막 20%만 추세가 좋을 때 남기는 식이 무난합니다.",
+          "Take 30% at TP1, 50% at TP2, and trail the last 20% only if the trend still confirms.": "1차 목표가에서 30%, 2차 목표가에서 50%를 정리하고, 마지막 20%만 추세가 계속 좋을 때 남기는 방식이 보수적입니다.",
+          "Take 50% at TP1, 30% at TP2, and close the rest by the end of the hold window unless momentum expands.": "1차 목표가에서 50%, 2차 목표가에서 30%를 정리하고, 남은 물량은 추세가 더 강해지지 않으면 권장 보유 시간 안에 정리하는 편이 좋습니다."
+        },
+        leverageNote: {
+          "Conservative in-app heuristic for beginners, not exchange advice.": "초보자 기준의 보수적 앱 가이드일 뿐이며, 거래소 공식 권장값은 아닙니다."
+        },
+        starterNote: {
+          "For beginners, do not add to a losing futures position.": "초보자라면 손실 중인 선물 포지션에 물타기하지 않는 것이 좋습니다."
+        },
+        disclaimer: {
+          "This report is a probability-weighted watchlist helper for crypto futures sessions. It is not financial advice and should not be used as automatic execution logic.": "이 리포트는 코인 선물 세션을 위한 확률 기반 감시 보조 도구입니다. 투자 조언이 아니며 자동 매매 기준으로 사용하면 안 됩니다."
+        },
+        warning: {
+          "No long setups cleared the minimum quality filter in this run.": "이번 갱신에서는 최소 품질 기준을 넘는 롱 후보가 없었습니다.",
+          "No short setups cleared the minimum quality filter in this run.": "이번 갱신에서는 최소 품질 기준을 넘는 숏 후보가 없었습니다."
+        }
+      };
+
+      if (exactByKey[key] && exactByKey[key][stringValue]) {
+        return exactByKey[key][stringValue];
+      }
+
+      if (key === "holdWindowLabel") {
+        const match = stringValue.match(/^(\d+)-(\d+)h$/);
+        if (match) {
+          return `${match[1]}-${match[2]}시간`;
+        }
+      }
+
+      if (key === "recommendedLeverage") {
+        const match = stringValue.match(/^(\d+)x-(\d+)x$/);
+        if (match) {
+          return `${match[1]}배~${match[2]}배`;
+        }
+      }
+
+      if (key === "priceLogic") {
+        const match = stringValue.match(/^These levels use recent hourly volatility\. The stop is about 1R away, TP1 is near ([0-9.]+)R, and TP2 is near ([0-9.]+)R\.$/);
+        if (match) {
+          return `이 가격들은 최근 시간봉 변동성을 기준으로 잡았습니다. 손절은 대략 1R, 1차 익절은 약 ${match[1]}R, 2차 익절은 약 ${match[2]}R 수준입니다.`;
+        }
+      }
+
+      if (key === "thesis") {
+        let match = stringValue.match(/^(.+) is showing enough intraday continuation, participation, and crowding relief to stay on a bullish watchlist if the market regime holds\.$/);
+        if (match) {
+          return `${match[1]} 는 장중 추세, 참여도, 포지션 쏠림 완화가 동시에 괜찮아서 시장 분위기만 유지되면 롱 감시 종목으로 볼 만합니다.`;
+        }
+
+        match = stringValue.match(/^(.+) is underperforming the broader liquid futures basket and still looks vulnerable to downside continuation if the tape does not recover\.$/);
+        if (match) {
+          return `${match[1]} 는 주요 유동성 종목 대비 약한 편이라 시장이 살아나지 못하면 하락 지속 가능성을 더 봐야 합니다.`;
+        }
+      }
+
+      if (key === "invalidation") {
+        let match = stringValue.match(/^Reassess if price falls below (.+) or the 6h trend flips negative\.$/);
+        if (match) {
+          return `${match[1]} 아래로 밀리거나 6시간 추세가 꺾이면 다시 판단하는 편이 좋습니다.`;
+        }
+
+        match = stringValue.match(/^Reassess if price rises above (.+) or the 6h trend turns back up\.$/);
+        if (match) {
+          return `${match[1]} 위로 올라가거나 6시간 추세가 다시 살아나면 다시 판단하는 편이 좋습니다.`;
+        }
+      }
+
+      if (key === "reason") {
+        let match = stringValue.match(/^6h momentum is running (.+)$/);
+        if (match) {
+          return `최근 6시간 모멘텀이 ${match[1]}로 살아 있습니다.`;
+        }
+
+        match = stringValue.match(/^24h trend remains positive at (.+)$/);
+        if (match) {
+          return `24시간 추세도 ${match[1]}로 여전히 우상향입니다.`;
+        }
+
+        match = stringValue.match(/^quote volume is (.+)x above its recent baseline$/);
+        if (match) {
+          return `거래대금이 최근 기준 대비 ${match[1]}배 수준으로 붙고 있습니다.`;
+        }
+
+        match = stringValue.match(/^hourly closes stayed positive (.+) of the time$/);
+        if (match) {
+          return `시간봉 종가가 ${match[1]} 비율로 꾸준히 우상향했습니다.`;
+        }
+
+        match = stringValue.match(/^funding at (.+) suggests short crowding$/);
+        if (match) {
+          return `펀딩비가 ${match[1]}라 숏 쏠림이 남아 있을 가능성이 있습니다.`;
+        }
+
+        match = stringValue.match(/^6h momentum is slipping at (.+)$/);
+        if (match) {
+          return `최근 6시간 모멘텀이 ${match[1]}로 꺾였습니다.`;
+        }
+
+        match = stringValue.match(/^24h trend remains weak at (.+)$/);
+        if (match) {
+          return `24시간 추세도 ${match[1]}로 약한 편입니다.`;
+        }
+
+        match = stringValue.match(/^selling pressure is active with (.+)x baseline volume$/);
+        if (match) {
+          return `매도 압력이 최근 기준 대비 ${match[1]}배 거래량으로 확인됩니다.`;
+        }
+
+        match = stringValue.match(/^hourly closes were green only (.+) of the time$/);
+        if (match) {
+          return `시간봉 종가가 상승으로 끝난 비율이 ${match[1]}밖에 되지 않습니다.`;
+        }
+
+        match = stringValue.match(/^funding at (.+) hints that longs are still crowded$/);
+        if (match) {
+          return `펀딩비가 ${match[1]}라 롱 포지션이 아직 과하게 몰렸을 수 있습니다.`;
+        }
+
+        if (stringValue === "relative strength is better than most tracked liquid futures pairs") {
+          return "추적 중인 유동성 종목들보다 상대강도가 더 낫습니다.";
+        }
+
+        if (stringValue === "relative weakness is more persistent than the rest of the tracked basket") {
+          return "추적 중인 종목들보다 상대약세가 더 오래 이어지고 있습니다.";
+        }
+      }
+
+      if (key === "warning") {
+        const match = stringValue.match(/^Skipped (.+?): (.+)$/);
+        if (match) {
+          return `${match[1]} 종목은 처리를 건너뛰었습니다: ${match[2]}`;
+        }
+      }
+
+      return stringValue;
+    };
+
+    const getLocalizedText = (obj, key, fallback = "") => {
+      if (!obj) {
+        return fallback;
+      }
+
+      if (currentLang === "ko") {
+        if (obj[`${key}Ko`]) {
+          return obj[`${key}Ko`];
+        }
+
+        if (obj[key]) {
+          return translateDynamicText(key, obj[key]);
+        }
+
+        return fallback;
+      }
+
+      return obj[key] || obj[`${key}Ko`] || fallback;
+    };
+
+    const getLocalizedArray = (obj, key) => {
+      if (!obj) {
+        return [];
+      }
+
+      if (currentLang === "ko" && Array.isArray(obj[`${key}Ko`]) && obj[`${key}Ko`].length) {
+        return obj[`${key}Ko`];
+      }
+
+      if (Array.isArray(obj[key]) && obj[key].length) {
+        if (currentLang === "ko" && key === "reasons") {
+          return obj[key].map((item) => translateDynamicText("reason", item));
+        }
+
+        return obj[key];
+      }
+
+      return Array.isArray(obj[`${key}Ko`]) ? obj[`${key}Ko`] : [];
+    };
+
+    const getLocalizedWarnings = (warnings) => {
+      if (!Array.isArray(warnings) || !warnings.length) {
+        return [];
+      }
+
+      return warnings.map((warning) => translateDynamicText("warning", warning));
+    };
+
+    const formatSignedPct = (value) => {
+      const number = Number(value || 0);
+      const sign = number > 0 ? "+" : "";
+      return `${sign}${number.toFixed(2)}%`;
+    };
+
+    const getPriceDigits = (value) => {
+      const number = Math.abs(Number(value || 0));
+      if (number >= 100) {
+        return 2;
+      }
+      if (number >= 1) {
+        return 3;
+      }
+      if (number >= 0.1) {
+        return 4;
+      }
+      if (number >= 0.01) {
+        return 5;
+      }
+      return 6;
+    };
+
+    const formatPrice = (value) => {
+      const number = Number(value || 0);
+      return number.toLocaleString(localeTag(), {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: getPriceDigits(number)
+      });
+    };
+
+    const formatContribution = (value) => {
+      const number = Number(value || 0);
+      const sign = number > 0 ? "+" : "";
+      return `${sign}${number.toFixed(1)}`;
+    };
+
+    const getDriverLabel = (driver) => {
+      const keyMap = {
+        momentumTrend: "driverMomentumTrend",
+        bollinger: "driverBollinger",
+        marketRegime: "driverMarketRegime",
+        opportunity: "driverOpportunity",
+        funding: "driverFunding"
+      };
+
+      const translationKey = keyMap[driver?.key];
+      if (translationKey) {
+        return t(translationKey);
+      }
+
+      return driver?.label || driver?.key || "";
+    };
+
+    const renderEmpty = (target, text) => {
+      target.innerHTML = `<div class="empty">${text}</div>`;
+    };
+
+    const setStatusModel = (type, extra = {}) => {
+      statusModel = { type, ...extra };
+      renderStatus();
+    };
+
+    const renderStatus = () => {
+      refreshStatus.className = "refresh-status";
+
+      if (statusModel.type === "busy") {
+        refreshStatus.classList.add("is-busy");
+        refreshStatus.textContent = t("statusBusy");
+        return;
+      }
+
+      if (statusModel.type === "success-warning") {
+        refreshStatus.classList.add("is-busy");
+        const warnings = getLocalizedWarnings(statusModel.warnings);
+        const count = Number(statusModel.count || 0);
+        refreshStatus.textContent = count === 1 && warnings[0]
+          ? t("statusUpdatedWarningDetail", { warning: warnings[0] })
+          : count === 1
+          ? t("statusUpdatedWarnings_one")
+          : t("statusUpdatedWarnings_many", { count });
+        return;
+      }
+
+      if (statusModel.type === "success") {
+        refreshStatus.classList.add("is-success");
+        refreshStatus.textContent = t("statusUpdated");
+        return;
+      }
+
+      if (statusModel.type === "no-report") {
+        refreshStatus.classList.add("is-error");
+        refreshStatus.textContent = t("statusNoReport");
+        return;
+      }
+
+      if (statusModel.type === "error") {
+        refreshStatus.classList.add("is-error");
+        refreshStatus.textContent = `${t("statusErrorPrefix")}: ${statusModel.detail || "Unknown error"}`;
+        return;
+      }
+
+      refreshStatus.textContent = t("statusReading");
+    };
+
+    const setRefreshBusy = (busy) => {
+      isRefreshing = busy;
+      refreshButton.disabled = busy;
+      refreshButton.textContent = busy ? t("refreshingButton") : t("refreshButton");
+    };
+
+    const applyLocaleToStatic = () => {
+      document.documentElement.lang = currentLang;
+      heroTitle.textContent = t("heroTitle");
+      regimeLabel.textContent = t("marketRegime");
+      fearLabel.textContent = t("fearGreed");
+      generatedLabel.textContent = t("generated");
+      longTitle.textContent = t("longTitle");
+      longPill.textContent = t("longPill");
+      shortTitle.textContent = t("shortTitle");
+      shortPill.textContent = t("shortPill");
+      warningTitle.textContent = t("warningTitle");
+      summaryTitleHead.textContent = t("summaryTitle");
+      summaryPill.textContent = t("summaryPill");
+      headlineTitleHead.textContent = t("headlineTitle");
+      headlinePill.textContent = t("headlinePill");
+      setRefreshBusy(isRefreshing);
+
+      languageButtons.forEach((button) => {
+        button.classList.toggle("is-active", button.dataset.lang === currentLang);
+      });
+
+      if (currentReport) {
+        applyReport(currentReport);
+      } else {
+        renderNoReport();
+      }
+
+      renderStatus();
+    };
+
+    const renderBeginnerPlan = (plan, direction) => {
+      if (!plan) {
+        return "";
+      }
+
+      const style = getLocalizedText(plan, "style", "same-day intraday");
+      const holdWindow = getLocalizedText(plan, "holdWindowLabel", plan.holdWindowLabel || "-");
+      const partialExitRule = getLocalizedText(plan, "partialExitRule");
+      const scaleOutGuide = getLocalizedText(plan, "scaleOutGuide");
+      const priceLogic = getLocalizedText(plan, "priceLogic");
+      const leverageNote = getLocalizedText(plan, "leverageNote");
+      const starterNote = getLocalizedText(plan, "starterNote");
+      const leverage = getLocalizedText(plan, "recommendedLeverage", "-");
+
+      return `
+        <section class="plan-block">
+          <div class="plan-head">
+            <div class="plan-title">${t("planTitle")}</div>
+            <div class="plan-style">${style}</div>
+          </div>
+          <div class="plan-grid">
+            <div class="plan-item">
+              <span class="plan-label">${t("planCurrentPrice")}</span>
+              <strong class="plan-value">${formatPrice(plan.entryPrice)}</strong>
+            </div>
+            <div class="plan-item">
+              <span class="plan-label">${t("planHoldWindow")}</span>
+              <strong class="plan-value">${holdWindow}</strong>
+            </div>
+            <div class="plan-item">
+              <span class="plan-label">${t("planTp1")}</span>
+              <strong class="plan-value">${formatPrice(plan.takeProfit1Price)}</strong>
+              <div class="muted">${t("planMoveFromHere", { value: formatSignedPct(plan.takeProfit1Pct) })}</div>
+            </div>
+            <div class="plan-item">
+              <span class="plan-label">${t("planTp2")}</span>
+              <strong class="plan-value">${formatPrice(plan.takeProfit2Price)}</strong>
+              <div class="muted">${t("planMoveFromHere", { value: formatSignedPct(plan.takeProfit2Pct) })}</div>
+            </div>
+            <div class="plan-item">
+              <span class="plan-label">${t("planStopLoss")}</span>
+              <strong class="plan-value">${formatPrice(plan.stopLossPrice)}</strong>
+              <div class="muted">${t("planRiskBudget", { value: formatSignedPct(-Math.abs(plan.stopLossPct)) })}</div>
+            </div>
+            <div class="plan-item">
+              <span class="plan-label">${t("planLeverage")}</span>
+              <strong class="plan-value">${leverage}</strong>
+              <div class="muted">${t("planExitStyle")}: ${direction === "long" ? t("planExitStyleLong") : t("planExitStyleShort")}</div>
+            </div>
+          </div>
+          ${partialExitRule ? `<div class="plan-note"><strong>${t("planExitStyle")}:</strong> ${partialExitRule}</div>` : ""}
+          ${scaleOutGuide ? `<div class="plan-note"><strong>${t("planScaleOut")}:</strong> ${scaleOutGuide}</div>` : ""}
+          ${priceLogic ? `<div class="plan-note"><strong>${t("planLogic")}:</strong> ${priceLogic}</div>` : ""}
+          ${leverageNote ? `<div class="plan-note">${leverageNote}</div>` : ""}
+          ${starterNote ? `<div class="plan-note"><strong>${t("planStarter")}:</strong> ${starterNote}</div>` : ""}
+        </section>
+      `;
+    };
+
+    const renderMiniChart = (candidate) => {
+      const chart = candidate.chart || {};
+      const points = Array.isArray(chart.points) ? chart.points : [];
+      if (points.length < 2) {
+        return "";
+      }
+
+      const width = 360;
+      const height = 190;
+      const padding = { top: 12, right: 54, bottom: 18, left: 10 };
+      const plotWidth = width - padding.left - padding.right;
+      const plotHeight = height - padding.top - padding.bottom;
+      const levelValues = [
+        chart.support,
+        chart.resistance,
+        candidate.beginnerPlan?.entryPrice,
+        candidate.beginnerPlan?.stopLossPrice,
+        candidate.beginnerPlan?.takeProfit1Price,
+        candidate.beginnerPlan?.takeProfit2Price
+      ].map((value) => Number(value)).filter((value) => Number.isFinite(value));
+
+      const highValues = points.flatMap((point) => [
+        Number(point.high),
+        Number(point.upper),
+        Number(point.basis),
+        Number(point.lower)
+      ]).filter((value) => Number.isFinite(value));
+
+      const lowValues = points.flatMap((point) => [
+        Number(point.low),
+        Number(point.upper),
+        Number(point.basis),
+        Number(point.lower)
+      ]).filter((value) => Number.isFinite(value));
+
+      const rawMin = Math.min(...lowValues, ...levelValues);
+      const rawMax = Math.max(...highValues, ...levelValues);
+      const baseRange = rawMax - rawMin || Math.max(Math.abs(rawMax) * 0.04, 1);
+      const yPadding = baseRange * 0.1;
+      const minPrice = rawMin - yPadding;
+      const maxPrice = rawMax + yPadding;
+      const priceRange = maxPrice - minPrice || 1;
+      const slot = plotWidth / points.length;
+      const bodyWidth = Math.max(4, Math.min(12, slot * 0.56));
+      const xFor = (index) => padding.left + (slot * index) + (slot / 2);
+      const yFor = (value) => padding.top + ((maxPrice - Number(value)) / priceRange) * plotHeight;
+
+      const pathFor = (key) => points
+        .map((point, index) => `${index === 0 ? "M" : "L"} ${xFor(index).toFixed(2)} ${yFor(point[key]).toFixed(2)}`)
+        .join(" ");
+
+      const grids = [0.15, 0.4, 0.65, 0.9].map((ratio) => {
+        const y = padding.top + (plotHeight * ratio);
+        return `<line class="chart-grid" x1="${padding.left}" y1="${y.toFixed(2)}" x2="${(width - padding.right).toFixed(2)}" y2="${y.toFixed(2)}"></line>`;
+      }).join("");
+
+      const candles = points.map((point, index) => {
+        const open = Number(point.open);
+        const close = Number(point.close);
+        const high = Number(point.high);
+        const low = Number(point.low);
+        const x = xFor(index);
+        const bodyTop = Math.min(yFor(open), yFor(close));
+        const bodyBottom = Math.max(yFor(open), yFor(close));
+        const bodyHeight = Math.max(2, bodyBottom - bodyTop);
+        const bodyX = x - (bodyWidth / 2);
+        const candleClass = close >= open ? "chart-candle-up" : "chart-candle-down";
+
+        return `
+          <line class="chart-wick" x1="${x.toFixed(2)}" y1="${yFor(high).toFixed(2)}" x2="${x.toFixed(2)}" y2="${yFor(low).toFixed(2)}"></line>
+          <rect class="${candleClass}" x="${bodyX.toFixed(2)}" y="${bodyTop.toFixed(2)}" width="${bodyWidth.toFixed(2)}" height="${bodyHeight.toFixed(2)}" rx="2"></rect>
+        `;
+      }).join("");
+
+      const levelDescriptors = [
+        { label: t("levelSupport"), value: chart.support, className: "support" },
+        { label: t("levelResistance"), value: chart.resistance, className: "resistance" },
+        { label: t("levelEntry"), value: candidate.beginnerPlan?.entryPrice, className: "entry" },
+        { label: t("levelStop"), value: candidate.beginnerPlan?.stopLossPrice, className: "stop" },
+        { label: t("levelTp1"), value: candidate.beginnerPlan?.takeProfit1Price, className: "tp" },
+        { label: t("levelTp2"), value: candidate.beginnerPlan?.takeProfit2Price, className: "tp" }
+      ].filter((item) => Number.isFinite(Number(item.value)));
+
+      const levels = levelDescriptors.map((item) => {
+        const y = yFor(item.value);
+        return `<line class="chart-level ${item.className}" x1="${padding.left}" y1="${y.toFixed(2)}" x2="${(width - padding.right).toFixed(2)}" y2="${y.toFixed(2)}"></line>`;
+      }).join("");
+
+      const legend = levelDescriptors.map((item) => `<span class="chip">${item.label} ${formatPrice(item.value)}</span>`).join("");
+
+      return `
+        <section class="analysis-block">
+          <div class="analysis-head">
+            <div class="analysis-title">${t("chartTitle")}</div>
+            <div class="analysis-meta">${t("chartMeta", {
+              period: chart.bollingerPeriod || 20,
+              deviation: chart.bollingerDeviation || 2
+            })}</div>
+          </div>
+          <div class="chart-frame">
+            <svg class="mini-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="${candidate.symbol} chart">
+              ${grids}
+              ${levels}
+              <path class="chart-band-upper" d="${pathFor("upper")}"></path>
+              <path class="chart-band-basis" d="${pathFor("basis")}"></path>
+              <path class="chart-band-lower" d="${pathFor("lower")}"></path>
+              ${candles}
+            </svg>
+          </div>
+          <div class="chips">
+            <span class="chip">Upper Band</span>
+            <span class="chip">Basis</span>
+            <span class="chip">Lower Band</span>
+            ${legend}
+          </div>
+        </section>
+      `;
+    };
+
+    const renderScoreBreakdown = (candidate) => {
+      const breakdown = Array.isArray(candidate.scoreBreakdown) ? candidate.scoreBreakdown : [];
+      if (!breakdown.length) {
+        return "";
+      }
+
+      return `
+        <section class="analysis-block">
+          <div class="analysis-head">
+            <div class="analysis-title">${t("scoreDriversTitle")}</div>
+          </div>
+          <div class="driver-list">
+            ${breakdown.map((driver) => {
+              const value = Number(driver.points || 0);
+              const valueClass = value >= 0 ? "is-positive" : "is-negative";
+              return `
+                <div class="driver-row">
+                  <span class="driver-label">${getDriverLabel(driver)}</span>
+                  <span class="driver-value ${valueClass}">${formatContribution(value)}</span>
+                </div>
+              `;
+            }).join("")}
+          </div>
+        </section>
+      `;
+    };
+
+    const renderTechnicalNotes = (candidate) => {
+      const notes = getLocalizedArray(candidate, "technicalNotes");
+      if (!notes.length) {
+        return "";
+      }
+
+      return `
+        <section class="analysis-block">
+          <div class="analysis-head">
+            <div class="analysis-title">${t("technicalReadTitle")}</div>
+          </div>
+          <ul class="note-list">
+            ${notes.map((note) => `<li>${note}</li>`).join("")}
+          </ul>
+        </section>
+      `;
+    };
+
+    const renderCandidate = (candidate, direction) => {
+      const reasons = getLocalizedArray(candidate, "reasons");
+      const bandWidthRatio = Number(candidate.chart?.widthRatio || 0);
+      const thesis = getLocalizedText(candidate, "thesis");
+      const invalidation = getLocalizedText(candidate, "invalidation", t("reasonsFallback"));
+      const miniChart = renderMiniChart(candidate);
+      const scoreBreakdown = renderScoreBreakdown(candidate);
+      const technicalNotes = renderTechnicalNotes(candidate);
+      const beginnerPlan = renderBeginnerPlan(candidate.beginnerPlan, direction);
+
+      return `
+        <article class="candidate">
+          <div class="candidate-top">
+            <div>
+              <div class="symbol">${candidate.symbol}</div>
+              <p class="thesis">${thesis || ""}</p>
+            </div>
+            <div class="score-stack">
+              <div class="score-value">${Math.round(Number(candidate.biasScore || 0))}</div>
+              <div class="score-note">${direction === "long" ? t("scoreSuffixLong") : t("scoreSuffixShort")}</div>
+            </div>
+          </div>
+          <div class="chips">
+            <span class="chip">${t("chipPrice")} ${formatPrice(candidate.lastPrice)}</span>
+            <span class="chip">${t("chipMove6h")} ${formatSignedPct(candidate.move6hPct)}</span>
+            <span class="chip">${t("chipMove24h")} ${formatSignedPct(candidate.move24hPct)}</span>
+            <span class="chip">${t("chipFunding")} ${formatSignedPct(candidate.fundingRatePct)}</span>
+            <span class="chip">${t("chipVolume")} ${Number(candidate.volumeRatio || 0).toFixed(2)}x</span>
+            ${bandWidthRatio ? `<span class="chip">${t("chipBandWidth")} ${bandWidthRatio.toFixed(2)}x</span>` : ""}
+            <span class="chip">${t("chipConfidence")} ${Math.round(Number(candidate.confidence || 0))}</span>
+          </div>
+          ${miniChart}
+          ${scoreBreakdown}
+          ${technicalNotes}
+          ${beginnerPlan}
+          ${reasons.length
+            ? `<ul class="reason-list">${reasons.map((reason) => `<li>${reason}</li>`).join("")}</ul>`
+            : `<div class="muted">${t("reasonsFallback")}</div>`}
+          <div class="muted"><strong>${t("invalidationLabel")}</strong> ${invalidation}</div>
+        </article>
+      `;
+    };
+
+    const renderSummary = (report) => {
+      const target = document.getElementById("summary-list");
+      const context = report.marketContext || {};
+      const leaders = Array.isArray(context.leaders) ? context.leaders : [];
+      const laggards = Array.isArray(context.laggards) ? context.laggards : [];
+      const regimeLabelText = getLocalizedText(context, "regimeLabel", "Mixed");
+      const summaryText = getLocalizedText(context, "summary", t("reportFallback"));
+
+      target.innerHTML = `
+        <article class="summary-item">
+          <div class="summary-top">
+            <div class="summary-title">${t("summaryBreadthTitle")}</div>
+            <span class="pill market">${regimeLabelText}</span>
+          </div>
+          <div class="muted">${summaryText}</div>
+        </article>
+        <article class="summary-item">
+          <div class="summary-top">
+            <div class="summary-title">${t("summaryBroadTitle")}</div>
+            <div class="muted">${t("summaryBroadBody", { breadth: Number(context.breadthPositivePct || 0).toFixed(1) })}</div>
+          </div>
+          <div class="chips">
+            ${leaders.map((item) => `<span class="chip">${item.symbol} ${formatSignedPct(item.change24hPct)}</span>`).join("")}
+          </div>
+        </article>
+        <article class="summary-item">
+          <div class="summary-top">
+            <div class="summary-title">${t("summaryWeakTitle")}</div>
+            <div class="muted">${laggards.length ? t("summaryWeakBody") : t("summaryWeakFallback")}</div>
+          </div>
+          <div class="chips">
+            ${laggards.map((item) => `<span class="chip">${item.symbol} ${formatSignedPct(item.change24hPct)}</span>`).join("")}
+          </div>
+        </article>
+      `;
+    };
+
+    const renderHeadlines = (headlines) => {
+      const target = document.getElementById("headline-list");
+      if (!Array.isArray(headlines) || !headlines.length) {
+        renderEmpty(target, t("noHeadlinesLive"));
+        return;
+      }
+
+      target.innerHTML = headlines.map((headline) => `
+        <article class="headline">
+          <div class="headline-top">
+            <div class="summary-title">${headline.source || "Source"}</div>
+            <div class="muted">${getLocalizedText(headline, "sentimentLabel", "Neutral")}</div>
+          </div>
+          <div class="headline-title">
+            <a href="${headline.link || "#"}" target="_blank" rel="noreferrer">${headline.title || "Untitled headline"}</a>
+          </div>
+          <div class="muted">${headline.publishedLocal || headline.published || ""}</div>
+        </article>
+      `).join("");
+    };
+
+    const renderWarnings = (warnings) => {
+      const localizedWarnings = getLocalizedWarnings(warnings);
+
+      if (!localizedWarnings.length) {
+        warningPanel.hidden = true;
+        warningList.innerHTML = "";
+        warningPill.textContent = t("warningPill_one");
+        warningCopy.textContent = t("warningCopy_one");
+        return;
+      }
+
+      warningPanel.hidden = false;
+      warningPill.textContent = localizedWarnings.length === 1
+        ? t("warningPill_one")
+        : t("warningPill_many", { count: localizedWarnings.length });
+      warningCopy.textContent = localizedWarnings.length === 1
+        ? t("warningCopy_one")
+        : t("warningCopy_many", { count: localizedWarnings.length });
+      warningList.innerHTML = "";
+
+      localizedWarnings.forEach((warning) => {
+        const item = document.createElement("li");
+        item.textContent = warning;
+        warningList.appendChild(item);
+      });
+    };
+
+    const applyReport = (report) => {
+      currentReport = report;
+
+      const context = report.marketContext || {};
+      const generated = report.generatedAtLocal || report.generatedAt || "";
+      sampleBadge.textContent = report.isSample ? t("badgeSample") : t("badgeLive");
+
+      document.getElementById("hero-copy").textContent =
+        getLocalizedText(context, "summary", t("reportFallback"));
+
+      document.getElementById("regime-value").textContent = getLocalizedText(context, "regimeLabel", "Mixed");
+      document.getElementById("regime-note").textContent = t("regimeNote", {
+        score: Number(context.regimeScore || 0).toFixed(2),
+        breadth: Number(context.breadthPositivePct || 0).toFixed(1)
+      });
+
+      document.getElementById("fear-value").textContent =
+        context.fearGreed ? `${context.fearGreed.value} / 100` : "N/A";
+      document.getElementById("fear-note").textContent =
+        context.fearGreed ? getLocalizedText(context.fearGreed, "label", t("fearUnavailable")) : t("fearUnavailable");
+
+      document.getElementById("generated-value").textContent =
+        generated ? new Date(generated).toLocaleTimeString(localeTag(), { hour: "2-digit", minute: "2-digit" }) : "N/A";
+      document.getElementById("generated-note").textContent =
+        generated ? new Date(generated).toLocaleDateString(localeTag()) : t("generatedMissing");
+
+      const longTarget = document.getElementById("long-list");
+      const shortTarget = document.getElementById("short-list");
+
+      if (!Array.isArray(report.longCandidates) || !report.longCandidates.length) {
+        renderEmpty(longTarget, t("noLongs"));
+      } else {
+        longTarget.innerHTML = report.longCandidates.map((candidate) => renderCandidate(candidate, "long")).join("");
+      }
+
+      if (!Array.isArray(report.shortCandidates) || !report.shortCandidates.length) {
+        renderEmpty(shortTarget, t("noShorts"));
+      } else {
+        shortTarget.innerHTML = report.shortCandidates.map((candidate) => renderCandidate(candidate, "short")).join("");
+      }
+
+      renderSummary(report);
+      renderHeadlines(report.headlines || []);
+      renderWarnings(report.warnings || []);
+      document.getElementById("footer-note").textContent =
+        getLocalizedText(report, "disclaimer", t("footerFallback"));
+    };
+
+    const renderNoReport = () => {
+      currentReport = null;
+      sampleBadge.textContent = t("badgeSample");
+      document.getElementById("hero-copy").textContent = t("noReportHero");
+      document.getElementById("regime-value").textContent = "...";
+      document.getElementById("regime-note").textContent = t("noSummary");
+      document.getElementById("fear-value").textContent = "...";
+      document.getElementById("fear-note").textContent = t("fearUnavailable");
+      document.getElementById("generated-value").textContent = "...";
+      document.getElementById("generated-note").textContent = t("generatedLatest");
+      renderEmpty(document.getElementById("long-list"), t("noLongs"));
+      renderEmpty(document.getElementById("short-list"), t("noShorts"));
+      renderEmpty(document.getElementById("summary-list"), t("noSummary"));
+      renderEmpty(document.getElementById("headline-list"), t("noHeadlines"));
+      renderWarnings([]);
+      document.getElementById("footer-note").textContent = t("footerFallback");
+    };
+
+    const loadReport = async () => {
+      const candidates = ["./data/latest-report.json", "./data/sample-report.json"];
+
+      for (const url of candidates) {
+        try {
+          const response = await fetch(url, { cache: "no-store" });
+          if (!response.ok) {
+            continue;
+          }
+
+          const report = await response.json();
+          applyReport(report);
+          if (statusModel.type !== "success" && statusModel.type !== "success-warning") {
+            setStatusModel("reading");
+          } else {
+            renderStatus();
+          }
+          return;
+        } catch (error) {
+          continue;
+        }
+      }
+
+      renderNoReport();
+      setStatusModel("no-report");
+    };
+
+    const refreshReport = async () => {
+      setRefreshBusy(true);
+      setStatusModel("busy");
+
+      try {
+        const response = await fetch("/api/refresh", {
+          method: "POST",
+          cache: "no-store"
+        });
+        const payload = await response.json();
+
+        if (!response.ok || !payload.ok) {
+          throw new Error(payload.message || "Refresh failed.");
+        }
+
+        await loadReport();
+        if (Array.isArray(payload.warnings) && payload.warnings.length) {
+          setStatusModel("success-warning", {
+            count: payload.warnings.length,
+            warnings: payload.warnings
+          });
+        } else {
+          setStatusModel("success");
+        }
+      } catch (error) {
+        setStatusModel("error", { detail: error.message });
+      } finally {
+        setRefreshBusy(false);
+      }
+    };
+
+    refreshButton.addEventListener("click", () => {
+      refreshReport();
+    });
+
+    languageButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        currentLang = button.dataset.lang;
+        localStorage.setItem("morning-futures-lang", currentLang);
+        applyLocaleToStatic();
+      });
+    });
+
+    applyLocaleToStatic();
+    loadReport();
+    }
+  </script>
+</body>
+</html>
