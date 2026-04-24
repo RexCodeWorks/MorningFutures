@@ -223,9 +223,9 @@ function Get-BollingerSeries {
 
 function New-DefaultConfig {
     return [pscustomobject]@{
-        UniverseSize = 15
+        UniverseSize = 50
         TopPicks = 3
-        MinQuoteVolumeUsd = 30000000
+        MinQuoteVolumeUsd = 10000000
         KlineLookbackHours = 240
         PreferredSymbols = @(
             "BTC-USDT-SWAP",
@@ -574,30 +574,7 @@ function Get-SymbolUniverse {
         Sort-Object { Get-OkxNotionalVolumeUsd -Ticker $_ } -Descending
     )
 
-    $selected = New-Object System.Collections.Generic.List[object]
-    $seen = @{}
-
-    foreach ($preferred in @($Config.PreferredSymbols)) {
-        $normalizedPreferred = ConvertTo-OkxInstId -Symbol $preferred
-        $match = $eligible | Where-Object { $_.instId -eq $normalizedPreferred } | Select-Object -First 1
-        if ($match -and -not $seen.ContainsKey($match.instId)) {
-            $selected.Add($match)
-            $seen[$match.instId] = $true
-        }
-    }
-
-    if ($selected.Count -gt 0) {
-        return @($selected | Select-Object -First ([int]$Config.UniverseSize))
-    }
-
-    foreach ($ticker in $eligible) {
-        if (-not $seen.ContainsKey($ticker.instId)) {
-            $selected.Add($ticker)
-            $seen[$ticker.instId] = $true
-        }
-    }
-
-    return @($selected | Select-Object -First ([int]$Config.UniverseSize))
+    return @($eligible | Select-Object -First ([int]$Config.UniverseSize))
 }
 
 function Get-MarketContext {
@@ -1424,14 +1401,14 @@ function New-MorningFuturesReport {
     $minimumShortWatchScore = 72
     $minimumShortWatchEdge = 12
     $maximumShortWatchMarketRegimeScore = 0.2
-    $longWatchSnapshots = @(
+    $rawLongWatchSnapshots = @(
         $snapshots |
         Sort-Object `
             @{ Expression = { $_.longEdge }; Descending = $true }, `
             @{ Expression = { $_.longScore }; Descending = $true } |
         Where-Object { $_.longEdge -ge $minimumLongWatchEdge -and $_.longScore -ge $minimumLongWatchScore }
     )
-    $shortWatchSnapshots = @(
+    $rawShortWatchSnapshots = @(
         $snapshots |
         Sort-Object `
             @{ Expression = { $_.shortEdge }; Descending = $true }, `
@@ -1441,6 +1418,14 @@ function New-MorningFuturesReport {
             $_.shortScore -ge $minimumShortWatchScore -and
             [double]$marketContext.regimeScore -le $maximumShortWatchMarketRegimeScore
         }
+    )
+    $longWatchSnapshots = @(
+        $rawLongWatchSnapshots |
+        Where-Object { @($_.riskBlocks.long).Count -eq 0 }
+    )
+    $shortWatchSnapshots = @(
+        $rawShortWatchSnapshots |
+        Where-Object { @($_.riskBlocks.short).Count -eq 0 }
     )
     $longActionableSnapshots = @(
         $longWatchSnapshots |
@@ -1478,8 +1463,8 @@ function New-MorningFuturesReport {
         Where-Object { $shortSnapshots -notcontains $_ } |
         Select-Object -First ([Math]::Max(0, $topPicks - @($shortSnapshots).Count))
     )
-    $blockedLongCount = @($longWatchSnapshots | Where-Object { @($_.riskBlocks.long).Count -gt 0 }).Count
-    $blockedShortCount = @($shortWatchSnapshots | Where-Object { @($_.riskBlocks.short).Count -gt 0 }).Count
+    $blockedLongCount = @($rawLongWatchSnapshots | Where-Object { @($_.riskBlocks.long).Count -gt 0 }).Count
+    $blockedShortCount = @($rawShortWatchSnapshots | Where-Object { @($_.riskBlocks.short).Count -gt 0 }).Count
 
     if ($blockedLongCount -gt 0 -or $blockedShortCount -gt 0) {
         $warnings.Add(("Risk filters removed {0} long and {1} short extended setups." -f $blockedLongCount, $blockedShortCount))

@@ -2,9 +2,9 @@ window.__MORNING_FUTURES_APP_LOADED__ = true;
 
 (() => {
   const APP_CONFIG = {
-    universeSize: 15,
+    universeSize: 50,
     topPicks: 3,
-    minQuoteVolumeUsd: 30_000_000,
+    minQuoteVolumeUsd: 10_000_000,
     klineLookbackHours: 240,
     okxHosts: [
       "https://www.okx.com",
@@ -553,26 +553,7 @@ window.__MORNING_FUTURES_APP_LOADED__ = true;
       .filter((ticker) => getOkxNotionalVolumeUsd(ticker) >= APP_CONFIG.minQuoteVolumeUsd)
       .sort((a, b) => getOkxNotionalVolumeUsd(b) - getOkxNotionalVolumeUsd(a));
 
-    const selected = [];
-    const seen = new Set();
-
-    APP_CONFIG.preferredSymbols.forEach((preferred) => {
-      const normalizedPreferred = convertToOkxInstId(preferred);
-      const match = eligible.find((ticker) => ticker.instId === normalizedPreferred);
-      if (match && !seen.has(match.instId)) {
-        selected.push(match);
-        seen.add(match.instId);
-      }
-    });
-
-    eligible.forEach((ticker) => {
-      if (!seen.has(ticker.instId)) {
-        selected.push(ticker);
-        seen.add(ticker.instId);
-      }
-    });
-
-    return selected.slice(0, APP_CONFIG.universeSize);
+    return eligible.slice(0, APP_CONFIG.universeSize);
   };
 
   const getFundingMap = async (instIds) => {
@@ -1514,16 +1495,20 @@ window.__MORNING_FUTURES_APP_LOADED__ = true;
     const minimumShortWatchScore = 72;
     const minimumShortWatchEdge = 12;
     const maximumShortWatchMarketRegimeScore = 0.2;
-    const longWatchSnapshots = [...snapshots]
+    const rawLongWatchSnapshots = [...snapshots]
       .sort((left, right) => (right.longEdge - left.longEdge) || (right.longScore - left.longScore))
       .filter((snapshot) => snapshot.longEdge >= minimumLongWatchEdge && snapshot.longScore >= minimumLongWatchScore);
-    const shortWatchSnapshots = [...snapshots]
+    const rawShortWatchSnapshots = [...snapshots]
       .sort((left, right) => (right.shortEdge - left.shortEdge) || (right.shortScore - left.shortScore))
       .filter((snapshot) => (
         snapshot.shortEdge >= minimumShortWatchEdge
         && snapshot.shortScore >= minimumShortWatchScore
         && marketContext.regimeScore <= maximumShortWatchMarketRegimeScore
       ));
+    const longWatchSnapshots = rawLongWatchSnapshots
+      .filter((snapshot) => !snapshot.riskBlocks?.long?.length);
+    const shortWatchSnapshots = rawShortWatchSnapshots
+      .filter((snapshot) => !snapshot.riskBlocks?.short?.length);
     const longActionableSnapshots = longWatchSnapshots
       .filter((snapshot) => (
         snapshot.longEdge >= minimumLongDirectionalEdge
@@ -1547,8 +1532,8 @@ window.__MORNING_FUTURES_APP_LOADED__ = true;
     const shortWatchOnlySnapshots = shortWatchSnapshots
       .filter((snapshot) => !shortSnapshots.includes(snapshot))
       .slice(0, Math.max(0, APP_CONFIG.topPicks - shortSnapshots.length));
-    const blockedLongCount = longWatchSnapshots.filter((snapshot) => snapshot.riskBlocks?.long?.length).length;
-    const blockedShortCount = shortWatchSnapshots.filter((snapshot) => snapshot.riskBlocks?.short?.length).length;
+    const blockedLongCount = rawLongWatchSnapshots.filter((snapshot) => snapshot.riskBlocks?.long?.length).length;
+    const blockedShortCount = rawShortWatchSnapshots.filter((snapshot) => snapshot.riskBlocks?.short?.length).length;
 
     if (blockedLongCount || blockedShortCount) {
       warnings.push(localized(
