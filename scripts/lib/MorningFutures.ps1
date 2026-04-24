@@ -9,14 +9,15 @@ $script:MorningFuturesHeaders = @{
 
 $script:RiskFilter = @{
     MinimumHistoryCandles = 168
-    MaxLongMove6hPct = 6
-    MaxLongMove24hPct = 12
-    MaxShortMove6hPct = -6
-    MaxShortMove24hPct = -12
-    MaxLookbackMovePct = 35
+    MaxLongMove6hPct = 2.6
+    MaxLongMove24hPct = 3.2
+    MaxShortMove6hPct = -2.6
+    MaxShortMove24hPct = -3.2
+    MaxLookbackMovePct = 25
     MaxAverageHourlyRangePct = 4.5
     ExtendedBandPosition = 0.85
-    ExtendedBandMove6hPct = 3
+    ExtendedBandMove6hPct = 1.8
+    CounterTrendMove6hPct = 1.6
 }
 
 function Get-ProjectRoot {
@@ -817,6 +818,14 @@ function New-RiskProfile {
         $shortBlocks.Add(("Skipped short: selloff is extended ({0} 6h, {1} 24h)." -f (Format-SignedPercent -Value $Change6hPct), (Format-SignedPercent -Value $Change24hPct)))
     }
 
+    if ($Change24hPct -lt 0 -and $Change6hPct -ge [double]$script:RiskFilter.CounterTrendMove6hPct) {
+        $longBlocks.Add(("Skipped long: 6h rebound is fighting a negative 24h tape ({0})." -f (Format-SignedPercent -Value $Change24hPct)))
+    }
+
+    if ($Change24hPct -gt 0 -and $Change6hPct -le (-1 * [double]$script:RiskFilter.CounterTrendMove6hPct)) {
+        $shortBlocks.Add(("Skipped short: 6h drop is fighting a positive 24h tape ({0})." -f (Format-SignedPercent -Value $Change24hPct)))
+    }
+
     if ($LookbackChangePct -ge [double]$script:RiskFilter.MaxLookbackMovePct) {
         $longBlocks.Add(("Skipped long: 10d move is already {0}." -f (Format-SignedPercent -Value $LookbackChangePct -Digits 1)))
     }
@@ -1344,21 +1353,28 @@ function New-MorningFuturesReport {
     }
 
     $topPicks = [int]$Config.TopPicks
-    $minimumBiasScore = 60
-    $minimumDirectionalEdge = 10
+    $minimumLongBiasScore = 75
+    $minimumLongDirectionalEdge = 12
+    $minimumShortBiasScore = 78
+    $minimumShortDirectionalEdge = 14
+    $maximumShortMarketRegimeScore = 0.1
     $longQualifiedSnapshots = @(
         $snapshots |
         Sort-Object `
             @{ Expression = { $_.longEdge }; Descending = $true }, `
             @{ Expression = { $_.longScore }; Descending = $true } |
-        Where-Object { $_.longEdge -ge $minimumDirectionalEdge -and $_.longScore -ge $minimumBiasScore }
+        Where-Object { $_.longEdge -ge $minimumLongDirectionalEdge -and $_.longScore -ge $minimumLongBiasScore }
     )
     $shortQualifiedSnapshots = @(
         $snapshots |
         Sort-Object `
             @{ Expression = { $_.shortEdge }; Descending = $true }, `
             @{ Expression = { $_.shortScore }; Descending = $true } |
-        Where-Object { $_.shortEdge -ge $minimumDirectionalEdge -and $_.shortScore -ge $minimumBiasScore }
+        Where-Object {
+            $_.shortEdge -ge $minimumShortDirectionalEdge -and
+            $_.shortScore -ge $minimumShortBiasScore -and
+            [double]$marketContext.regimeScore -le $maximumShortMarketRegimeScore
+        }
     )
     $longActionableSnapshots = @(
         $longQualifiedSnapshots |

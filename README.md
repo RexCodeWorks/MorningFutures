@@ -52,6 +52,8 @@ The `dashboard/` app can be deployed directly to GitHub Pages. In this mode:
   Legacy Windows Task Scheduler helper.
 - `scripts/Test-MorningFuturesSmoke.ps1`
   Legacy PowerShell smoke test.
+- `scripts/Backtest-MorningFutures.ps1`
+  Walk-forward OKX 1H candle backtest for the scoring and risk-filter logic.
 
 ## Legacy Local PowerShell Mode
 
@@ -63,6 +65,18 @@ powershell -ExecutionPolicy Bypass -File .\scripts\Start-MorningFuturesDashboard
 ```
 
 Then open `http://localhost:8787`.
+
+### Backtest The Scoring Logic
+
+Run a walk-forward backtest with 10x leverage, conservative direction-specific thresholds, and a 6-hour max hold:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\Backtest-MorningFutures.ps1 -Days 30 -Leverage 10 -HoldHours 6
+```
+
+The script writes a JSON summary and CSV trade log under `data/`.
+By default it blocks overlapping entries in the same symbol and direction until the prior simulated trade exits.
+Use `-ScoreThreshold 70` to force the same threshold for both long and short tests.
 
 ## Notes
 

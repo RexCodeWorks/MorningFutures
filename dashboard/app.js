@@ -241,14 +241,15 @@ window.__MORNING_FUTURES_APP_LOADED__ = true;
   const REFRESH_COOLDOWN_MS = 30_000;
   const RISK_FILTER = {
     minimumHistoryCandles: 168,
-    maxLongMove6hPct: 6,
-    maxLongMove24hPct: 12,
-    maxShortMove6hPct: -6,
-    maxShortMove24hPct: -12,
-    maxLookbackMovePct: 35,
+    maxLongMove6hPct: 2.6,
+    maxLongMove24hPct: 3.2,
+    maxShortMove6hPct: -2.6,
+    maxShortMove24hPct: -3.2,
+    maxLookbackMovePct: 25,
     maxAverageHourlyRangePct: 4.5,
     extendedBandPosition: 0.85,
-    extendedBandMove6hPct: 3
+    extendedBandMove6hPct: 1.8,
+    counterTrendMove6hPct: 1.6
   };
   let lastRefreshTime = 0;
   let isRefreshing = false;
@@ -758,6 +759,20 @@ window.__MORNING_FUTURES_APP_LOADED__ = true;
       shortBlocks.push(localized(
         `Skipped short: selloff is extended (${formatSignedPct(change6hPct)} 6h, ${formatSignedPct(change24hPct)} 24h).`,
         `숏 제외: 하락이 과확장됐습니다 (6시간 ${formatSignedPct(change6hPct)}, 24시간 ${formatSignedPct(change24hPct)}).`
+      ));
+    }
+
+    if (change24hPct < 0 && change6hPct >= RISK_FILTER.counterTrendMove6hPct) {
+      longBlocks.push(localized(
+        `Skipped long: 6h rebound is fighting a negative 24h tape (${formatSignedPct(change24hPct)}).`,
+        `롱 제외: 6시간 반등이 24시간 약세 흐름(${formatSignedPct(change24hPct)})과 충돌합니다.`
+      ));
+    }
+
+    if (change24hPct > 0 && change6hPct <= -RISK_FILTER.counterTrendMove6hPct) {
+      shortBlocks.push(localized(
+        `Skipped short: 6h drop is fighting a positive 24h tape (${formatSignedPct(change24hPct)}).`,
+        `숏 제외: 6시간 하락이 24시간 강세 흐름(${formatSignedPct(change24hPct)})과 충돌합니다.`
       ));
     }
 
@@ -1367,14 +1382,21 @@ window.__MORNING_FUTURES_APP_LOADED__ = true;
       throw new Error("Not enough liquid pair snapshots were built to form a live report.");
     }
 
-    const minimumBiasScore = 60;
-    const minimumDirectionalEdge = 10;
+    const minimumLongBiasScore = 75;
+    const minimumLongDirectionalEdge = 12;
+    const minimumShortBiasScore = 78;
+    const minimumShortDirectionalEdge = 14;
+    const maximumShortMarketRegimeScore = 0.1;
     const longQualifiedSnapshots = [...snapshots]
       .sort((left, right) => (right.longEdge - left.longEdge) || (right.longScore - left.longScore))
-      .filter((snapshot) => snapshot.longEdge >= minimumDirectionalEdge && snapshot.longScore >= minimumBiasScore);
+      .filter((snapshot) => snapshot.longEdge >= minimumLongDirectionalEdge && snapshot.longScore >= minimumLongBiasScore);
     const shortQualifiedSnapshots = [...snapshots]
       .sort((left, right) => (right.shortEdge - left.shortEdge) || (right.shortScore - left.shortScore))
-      .filter((snapshot) => snapshot.shortEdge >= minimumDirectionalEdge && snapshot.shortScore >= minimumBiasScore);
+      .filter((snapshot) => (
+        snapshot.shortEdge >= minimumShortDirectionalEdge
+        && snapshot.shortScore >= minimumShortBiasScore
+        && marketContext.regimeScore <= maximumShortMarketRegimeScore
+      ));
     const longSnapshots = longQualifiedSnapshots
       .filter((snapshot) => !snapshot.riskBlocks?.long?.length)
       .slice(0, APP_CONFIG.topPicks);
