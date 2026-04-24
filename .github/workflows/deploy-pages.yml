@@ -5,9 +5,6 @@ on:
     branches:
       - main
       - master
-    paths:
-      - "dashboard/**"
-      - ".github/workflows/deploy-pages.yml"
   workflow_dispatch:
 
 permissions:
