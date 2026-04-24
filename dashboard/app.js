@@ -72,12 +72,32 @@ window.__MORNING_FUTURES_APP_LOADED__ = true;
       shortPill: "Short Bias",
       summaryTitle: "Market Summary",
       summaryPill: "Context",
+      viewsTitle: "Market Views",
+      viewsPill: "Playbook",
       sourceTitle: "Live Sources",
       sourcePill: "Feeds",
       noLongs: "No long setups cleared the minimum quality filter in this refresh.",
       noShorts: "No short setups cleared the minimum quality filter in this refresh.",
       noSummary: "The dashboard is waiting for a live report.",
       noSources: "Source details will appear after a successful refresh.",
+      noViews: "Market views will appear after a live refresh.",
+      viewCommon: "Common view",
+      viewMyRead: "My read",
+      viewRiskTitle: "Risk First",
+      viewRiskCommon: "Many futures traders start with leverage, liquidation distance, stop placement, and position size before looking for upside.",
+      viewRiskRead: "This dashboard treats risk filters as gates. If the setup is too extended, too volatile, or too new, it should not become actionable just because the score is high.",
+      viewMomentumTitle: "Momentum",
+      viewMomentumCommon: "Trend-following traders favor relative strength, rising participation, and continuation while the broader tape supports risk.",
+      viewMomentumRead: "Momentum is useful here only after overextension checks. Strong 6h/24h moves are monitored, but extreme moves are demoted to watch-only or removed.",
+      viewFundingTitle: "Funding / Crowding",
+      viewFundingCommon: "Perpetual futures traders watch funding as a crowding signal: expensive longs or shorts can warn that one side is crowded.",
+      viewFundingRead: "Funding is a supporting input, not a standalone trigger. It can improve or weaken a candidate, but it should not override price structure.",
+      viewLiquidityTitle: "Liquidity",
+      viewLiquidityCommon: "Some traders wait for stop runs, failed breakouts, or liquidity sweeps before entering, especially around obvious highs and lows.",
+      viewLiquidityRead: "This is promising but not fully integrated yet. Treat liquidity-grab ideas as a separate experiment to validate with the harness before using them in scoring.",
+      viewMeanTitle: "Mean Reversion",
+      viewMeanCommon: "Countertrend traders look for stretched moves to fade after exhaustion, usually with tight invalidation.",
+      viewMeanRead: "This dashboard does not mix mean reversion into actionable trend signals. Stretched moves are filtered first; a separate reversion model would be safer.",
       reportFallback: "The report compares liquid perpetual swaps, measures intraday pressure, and highlights the strongest and weakest names right now.",
       regimeNote: "Regime score {score} with {breadth}% positive breadth.",
       fearUnavailable: "Fear and Greed feed unavailable.",
@@ -170,12 +190,32 @@ window.__MORNING_FUTURES_APP_LOADED__ = true;
       shortPill: "숏 우위",
       summaryTitle: "시장 요약",
       summaryPill: "맥락",
+      viewsTitle: "시장 관점",
+      viewsPill: "플레이북",
       sourceTitle: "실시간 출처",
       sourcePill: "데이터",
       noLongs: "이번 계산에서는 기준을 통과한 롱 후보가 없습니다.",
       noShorts: "이번 계산에서는 기준을 통과한 숏 후보가 없습니다.",
       noSummary: "실시간 리포트를 기다리는 중입니다.",
       noSources: "새로고침이 완료되면 데이터 출처가 여기에 표시됩니다.",
+      noViews: "실시간 갱신 후 시장 관점이 표시됩니다.",
+      viewCommon: "일반적인 관점",
+      viewMyRead: "내 판단",
+      viewRiskTitle: "리스크 우선",
+      viewRiskCommon: "많은 선물 트레이더는 방향보다 먼저 레버리지, 청산 거리, 손절 위치, 포지션 크기를 봅니다.",
+      viewRiskRead: "이 대시보드는 리스크 필터를 관문으로 봅니다. 과확장, 고변동성, 짧은 히스토리 종목은 점수가 높아도 진입 후보가 되면 안 됩니다.",
+      viewMomentumTitle: "모멘텀",
+      viewMomentumCommon: "추세 추종 관점은 상대강도, 거래 참여 증가, 시장 분위기가 받쳐주는 지속 흐름을 선호합니다.",
+      viewMomentumRead: "여기서는 과확장 확인을 통과한 모멘텀만 유효합니다. 6시간/24시간 강한 움직임은 보되, 극단 움직임은 관심 후보로 낮추거나 제외합니다.",
+      viewFundingTitle: "펀딩 / 쏠림",
+      viewFundingCommon: "무기한 선물 트레이더는 펀딩비를 포지션 쏠림 신호로 봅니다. 롱이나 숏 비용이 비싸면 한쪽이 과밀할 수 있습니다.",
+      viewFundingRead: "펀딩은 보조 입력입니다. 후보를 조금 강화하거나 약화시킬 수 있지만, 가격 구조를 뒤집는 단독 트리거로 쓰지는 않습니다.",
+      viewLiquidityTitle: "유동성",
+      viewLiquidityCommon: "일부 트레이더는 명확한 고점/저점 근처의 스탑런, 돌파 실패, 유동성 sweep 이후 진입을 기다립니다.",
+      viewLiquidityRead: "가능성은 있지만 아직 완전히 통합하지 않았습니다. 유동성 사냥 아이디어는 별도 실험으로 만들고 하네스로 검증한 뒤 점수에 넣는 게 안전합니다.",
+      viewMeanTitle: "평균회귀",
+      viewMeanCommon: "역추세 트레이더는 과하게 뻗은 움직임이 힘을 잃을 때 짧은 무효화 기준으로 되돌림을 노립니다.",
+      viewMeanRead: "이 대시보드는 평균회귀를 추세 진입 신호와 섞지 않습니다. 과확장 움직임은 먼저 걸러내고, 되돌림 전략은 별도 모델로 분리하는 편이 낫습니다.",
       reportFallback: "유동성이 높은 무기한 선물들을 비교해서 지금 상대적으로 강한 종목과 약한 종목을 추려냅니다.",
       regimeNote: "시장 점수 {score}, 상승 폭은 {breadth}%입니다.",
       fearUnavailable: "공포/탐욕 지수를 가져오지 못했습니다.",
@@ -817,6 +857,77 @@ window.__MORNING_FUTURES_APP_LOADED__ = true;
     };
   };
 
+  const getLiquiditySignal = (candles, lookback = 24) => {
+    const items = Array.isArray(candles) ? candles : [];
+    if (items.length < lookback + 2) {
+      return {
+        type: "none",
+        direction: "neutral",
+        label: localized("No sweep", "sweep 없음"),
+        note: localized(
+          "No clear liquidity sweep was detected on the latest hourly candle.",
+          "최근 시간봉에서는 뚜렷한 유동성 sweep이 감지되지 않았습니다."
+        )
+      };
+    }
+
+    const current = items[items.length - 1];
+    const priorWindow = getWindowBeforeTail(items, 1, lookback);
+    const priorHigh = Math.max(...priorWindow.map((candle) => Number(candle.high)).filter(Number.isFinite));
+    const priorLow = Math.min(...priorWindow.map((candle) => Number(candle.low)).filter(Number.isFinite));
+
+    if (!Number.isFinite(priorHigh) || !Number.isFinite(priorLow)) {
+      return {
+        type: "none",
+        direction: "neutral",
+        label: localized("No sweep", "sweep 없음"),
+        note: localized(
+          "Liquidity context is unavailable because the recent high/low window is incomplete.",
+          "최근 고점/저점 구간이 충분하지 않아 유동성 맥락을 계산하지 못했습니다."
+        )
+      };
+    }
+
+    const sweptLow = current.low < priorLow && current.close > priorLow && current.close > current.open;
+    const sweptHigh = current.high > priorHigh && current.close < priorHigh && current.close < current.open;
+
+    if (sweptLow) {
+      return {
+        type: "bullishSweep",
+        direction: "long",
+        level: roundTradePrice(priorLow),
+        label: localized("Bullish sweep", "상방 sweep"),
+        note: localized(
+          `Price swept below ${formatPrice(priorLow)} and reclaimed it on the latest hourly candle.`,
+          `최근 시간봉에서 ${formatPrice(priorLow)} 아래 유동성을 쓸고 다시 회복했습니다.`
+        )
+      };
+    }
+
+    if (sweptHigh) {
+      return {
+        type: "bearishSweep",
+        direction: "short",
+        level: roundTradePrice(priorHigh),
+        label: localized("Bearish sweep", "하방 sweep"),
+        note: localized(
+          `Price swept above ${formatPrice(priorHigh)} and rejected it on the latest hourly candle.`,
+          `최근 시간봉에서 ${formatPrice(priorHigh)} 위 유동성을 쓸고 다시 밀렸습니다.`
+        )
+      };
+    }
+
+    return {
+      type: "none",
+      direction: "neutral",
+      label: localized("No sweep", "sweep 없음"),
+      note: localized(
+        "No clear liquidity sweep was detected on the latest hourly candle.",
+        "최근 시간봉에서는 뚜렷한 유동성 sweep이 감지되지 않았습니다."
+      )
+    };
+  };
+
   const getTechnicalChartNotes = ({
     bollingerPosition,
     bandWidthRatio,
@@ -962,6 +1073,10 @@ window.__MORNING_FUTURES_APP_LOADED__ = true;
       supportPrice: recentSupport,
       resistancePrice: recentResistance
     });
+    const liquiditySignal = getLiquiditySignal(candles, 24);
+    if (liquiditySignal.type !== "none") {
+      technicalNotes.unshift(liquiditySignal.note);
+    }
     const riskProfile = getRiskProfile({
       candles,
       change6hPct,
@@ -1105,6 +1220,7 @@ window.__MORNING_FUTURES_APP_LOADED__ = true;
       shortReasons,
       riskFlags: riskProfile.riskFlags,
       riskBlocks: riskProfile.riskBlocks,
+      liquiditySignal,
       technicalNotes,
       chart: {
         points: chartPoints,
@@ -1287,6 +1403,7 @@ window.__MORNING_FUTURES_APP_LOADED__ = true;
       volumeRatio: snapshot.volumeRatio,
       volatilityPct: snapshot.volatilityPct,
       riskFlags: Array.isArray(snapshot.riskFlags) ? snapshot.riskFlags.slice(0, 3) : [],
+      liquiditySignal: snapshot.liquiditySignal,
       reasons: reasons.slice(0, 3),
       technicalNotes: snapshot.technicalNotes.slice(0, 4),
       scoreBreakdown: [
@@ -1560,6 +1677,8 @@ window.__MORNING_FUTURES_APP_LOADED__ = true;
     document.getElementById("short-pill").textContent = t("shortPill");
     document.getElementById("summary-title-head").textContent = t("summaryTitle");
     document.getElementById("summary-pill").textContent = t("summaryPill");
+    document.getElementById("views-title-head").textContent = t("viewsTitle");
+    document.getElementById("views-pill").textContent = t("viewsPill");
     document.getElementById("headline-title-head").textContent = t("sourceTitle");
     document.getElementById("headline-pill").textContent = t("sourcePill");
 
@@ -1803,6 +1922,8 @@ window.__MORNING_FUTURES_APP_LOADED__ = true;
     const invalidation = pickText(candidate.invalidation, t("reasonsFallback"));
     const bandWidthRatio = Number(candidate.chart?.widthRatio || 0);
     const isActionable = candidate.signalStatus !== "watch";
+    const liquiditySignal = candidate.liquiditySignal || {};
+    const hasLiquiditySignal = liquiditySignal.type && liquiditySignal.type !== "none";
 
     return `
       <article class="candidate">
@@ -1824,13 +1945,14 @@ window.__MORNING_FUTURES_APP_LOADED__ = true;
           <span class="chip">${t("chipFunding")} ${formatSignedPct(candidate.fundingRatePct)}</span>
           <span class="chip">${t("chipVolume")} ${Number(candidate.volumeRatio || 0).toFixed(2)}x</span>
           ${bandWidthRatio ? `<span class="chip">${t("chipBandWidth")} ${bandWidthRatio.toFixed(2)}x</span>` : ""}
+          ${hasLiquiditySignal ? `<span class="chip liquidity-chip">${pickText(liquiditySignal.label)}</span>` : ""}
           <span class="chip">${t("chipConfidence")} ${Math.round(Number(candidate.confidence || 0))}</span>
           ${riskFlags.map((flag) => `<span class="chip risk-chip">${flag}</span>`).join("")}
         </div>
         ${renderMiniChart(candidate)}
+        ${renderBeginnerPlan(candidate.beginnerPlan, direction)}
         ${renderScoreBreakdown(candidate)}
         ${renderTechnicalNotes(candidate)}
-        ${renderBeginnerPlan(candidate.beginnerPlan, direction)}
         ${reasons.length
           ? `<ul class="reason-list">${reasons.map((reason) => `<li>${reason}</li>`).join("")}</ul>`
           : `<div class="muted">${t("reasonsFallback")}</div>`}
@@ -1883,6 +2005,49 @@ window.__MORNING_FUTURES_APP_LOADED__ = true;
         </div>
       </article>
     `;
+  };
+
+  const getMarketViews = () => [
+    {
+      title: t("viewRiskTitle"),
+      common: t("viewRiskCommon"),
+      read: t("viewRiskRead")
+    },
+    {
+      title: t("viewMomentumTitle"),
+      common: t("viewMomentumCommon"),
+      read: t("viewMomentumRead")
+    },
+    {
+      title: t("viewFundingTitle"),
+      common: t("viewFundingCommon"),
+      read: t("viewFundingRead")
+    },
+    {
+      title: t("viewLiquidityTitle"),
+      common: t("viewLiquidityCommon"),
+      read: t("viewLiquidityRead")
+    },
+    {
+      title: t("viewMeanTitle"),
+      common: t("viewMeanCommon"),
+      read: t("viewMeanRead")
+    }
+  ];
+
+  const renderMarketViews = () => {
+    const target = document.getElementById("views-list");
+    const views = getMarketViews();
+
+    target.innerHTML = views.map((view) => `
+      <article class="summary-item">
+        <div class="summary-top">
+          <div class="summary-title">${view.title}</div>
+        </div>
+        <div class="muted"><strong>${t("viewCommon")}:</strong> ${view.common}</div>
+        <div class="muted"><strong>${t("viewMyRead")}:</strong> ${view.read}</div>
+      </article>
+    `).join("");
   };
 
   const renderSources = (items) => {
@@ -1974,6 +2139,7 @@ window.__MORNING_FUTURES_APP_LOADED__ = true;
     }
 
     renderSummary(report);
+    renderMarketViews();
     renderSources(report.headlines || []);
     renderWarnings(report.warnings || []);
     document.getElementById("footer-note").textContent = pickText(report.disclaimer, t("footerFallback"));
@@ -1990,6 +2156,7 @@ window.__MORNING_FUTURES_APP_LOADED__ = true;
     renderEmpty(document.getElementById("long-list"), t("noLongs"));
     renderEmpty(document.getElementById("short-list"), t("noShorts"));
     renderEmpty(document.getElementById("summary-list"), t("noSummary"));
+    renderEmpty(document.getElementById("views-list"), t("noViews"));
     renderEmpty(document.getElementById("headline-list"), t("noSources"));
     renderWarnings([]);
     document.getElementById("footer-note").textContent = t("footerFallback");
@@ -2039,6 +2206,11 @@ window.__MORNING_FUTURES_APP_LOADED__ = true;
       currentLang = button.dataset.lang === "ko" ? "ko" : "en";
       localStorage.setItem("morning-futures-lang", currentLang);
       applyLocaleToStatic();
+      if (currentReport) {
+        applyReport(currentReport);
+      } else {
+        renderNoReport();
+      }
     });
   });
 

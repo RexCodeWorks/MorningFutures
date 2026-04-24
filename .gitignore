@@ -2,3 +2,4 @@ config.json
 data/latest-report.json
 data/backtest-*.csv
 data/backtest-*.json
+data/harness/

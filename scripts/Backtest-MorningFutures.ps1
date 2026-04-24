@@ -209,6 +209,7 @@ function New-BacktestSnapshot {
         -VolatilityPct $volatilityPct `
         -BollingerPosition $bollingerPosition `
         -BandWidthRatio $bandWidthRatio
+    $liquiditySignal = New-LiquiditySignal -Candles $candles -Lookback 24
 
     $scores = New-ScoreFromMetrics `
         -Change3hPct $change3hPct `
@@ -238,6 +239,7 @@ function New-BacktestSnapshot {
         shortEdge = $scores.ShortEdge
         riskFlags = @($riskProfile.riskFlags)
         riskBlocks = $riskProfile.riskBlocks
+        liquiditySignal = $liquiditySignal
     }
 }
 
@@ -526,6 +528,9 @@ for ($offset = $startOffset; $offset -le $endOffset; $offset++) {
                 lookbackMovePct = $snapshot.lookbackMovePct
                 volatilityPct = $snapshot.volatilityPct
                 marketRegimeScore = [Math]::Round($marketRegimeScore, 3)
+                liquiditySignalType = $snapshot.liquiditySignal.type
+                liquiditySignalDirection = $snapshot.liquiditySignal.direction
+                liquidityAligned = ([string]$snapshot.liquiditySignal.direction -eq $direction)
             })
     }
 }
@@ -550,6 +555,10 @@ $byScoreBand = @(
         $bandSummary | Add-Member -NotePropertyName scoreBand -NotePropertyValue $band.Label -PassThru
     }
 )
+$liquidityAlignedTrades = @($tradeItems | Where-Object { $_.liquidityAligned -eq $true })
+$liquidityAlignedSummary = Get-BacktestSummary -Trades $liquidityAlignedTrades
+$liquiditySweepTrades = @($tradeItems | Where-Object { $_.liquiditySignalType -ne "none" })
+$liquiditySweepSummary = Get-BacktestSummary -Trades $liquiditySweepTrades
 
 if (-not $OutputPath) {
     $stamp = Get-Date -Format "yyyyMMdd-HHmmss"
@@ -578,6 +587,8 @@ $result = [pscustomobject]@{
     summary = $summary
     byDirection = $byDirection
     byScoreBand = $byScoreBand
+    liquiditySweep = $liquiditySweepSummary
+    liquidityAligned = $liquidityAlignedSummary
     trades = $tradeItems
 }
 

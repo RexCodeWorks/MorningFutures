@@ -851,6 +851,58 @@ function New-RiskProfile {
     }
 }
 
+function New-LiquiditySignal {
+    param(
+        [Parameter(Mandatory = $true)]
+        [object[]]$Candles,
+        [int]$Lookback = 24
+    )
+
+    $items = @($Candles)
+    if ($items.Count -lt ($Lookback + 2)) {
+        return [pscustomobject]@{
+            type = "none"
+            direction = "neutral"
+            label = "No sweep"
+            note = "No clear liquidity sweep was detected on the latest hourly candle."
+        }
+    }
+
+    $current = $items[-1]
+    $priorWindow = Get-WindowBeforeTail -Items $items -TailCount 1 -WindowSize $Lookback
+    $priorHigh = [double](($priorWindow | Measure-Object -Property High -Maximum).Maximum)
+    $priorLow = [double](($priorWindow | Measure-Object -Property Low -Minimum).Minimum)
+    $sweptLow = [double]$current.Low -lt $priorLow -and [double]$current.Close -gt $priorLow -and [double]$current.Close -gt [double]$current.Open
+    $sweptHigh = [double]$current.High -gt $priorHigh -and [double]$current.Close -lt $priorHigh -and [double]$current.Close -lt [double]$current.Open
+
+    if ($sweptLow) {
+        return [pscustomobject]@{
+            type = "bullishSweep"
+            direction = "long"
+            level = Round-TradePrice -Price $priorLow
+            label = "Bullish sweep"
+            note = "Price swept below {0} and reclaimed it on the latest hourly candle." -f (Round-TradePrice -Price $priorLow)
+        }
+    }
+
+    if ($sweptHigh) {
+        return [pscustomobject]@{
+            type = "bearishSweep"
+            direction = "short"
+            level = Round-TradePrice -Price $priorHigh
+            label = "Bearish sweep"
+            note = "Price swept above {0} and rejected it on the latest hourly candle." -f (Round-TradePrice -Price $priorHigh)
+        }
+    }
+
+    return [pscustomobject]@{
+        type = "none"
+        direction = "neutral"
+        label = "No sweep"
+        note = "No clear liquidity sweep was detected on the latest hourly candle."
+    }
+}
+
 function Get-TechnicalChartNotes {
     param(
         [double]$BollingerPosition,
@@ -992,6 +1044,10 @@ function Get-SymbolSnapshot {
         -BasisSlopePct $basisSlopePct `
         -SupportPrice $recentSupport `
         -ResistancePrice $recentResistance
+    $liquiditySignal = New-LiquiditySignal -Candles $candles -Lookback 24
+    if ($liquiditySignal.type -ne "none") {
+        $technicalNotes = @($liquiditySignal.note) + @($technicalNotes)
+    }
     $riskProfile = New-RiskProfile `
         -Candles $candles `
         -Change6hPct $change6hPct `
@@ -1091,6 +1147,7 @@ function Get-SymbolSnapshot {
         shortReasons = @($shortReasons)
         riskFlags = @($riskProfile.riskFlags)
         riskBlocks = $riskProfile.riskBlocks
+        liquiditySignal = $liquiditySignal
         technicalNotes = @($technicalNotes)
         chart = [pscustomobject]@{
             points = @($chartPoints)
@@ -1300,6 +1357,7 @@ function ConvertTo-Candidate {
         volumeRatio = $Snapshot.volumeRatio
         volatilityPct = $Snapshot.volatilityPct
         riskFlags = @($Snapshot.riskFlags | Select-Object -First 3)
+        liquiditySignal = $Snapshot.liquiditySignal
         reasons = @($reasons | Select-Object -First 3)
         technicalNotes = @($Snapshot.technicalNotes | Select-Object -First 4)
         scoreBreakdown = @($scoreBreakdown)

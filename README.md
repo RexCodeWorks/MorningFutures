@@ -54,6 +54,8 @@ The `dashboard/` app can be deployed directly to GitHub Pages. In this mode:
   Legacy PowerShell smoke test.
 - `scripts/Backtest-MorningFutures.ps1`
   Walk-forward OKX 1H candle backtest for the scoring and risk-filter logic.
+- `scripts/Run-MorningFuturesHarness.ps1`
+  Runs multiple backtest configurations and writes pass/fail summaries.
 
 ## Legacy Local PowerShell Mode
 
@@ -77,6 +79,22 @@ powershell -ExecutionPolicy Bypass -File .\scripts\Backtest-MorningFutures.ps1 -
 The script writes a JSON summary and CSV trade log under `data/`.
 By default it blocks overlapping entries in the same symbol and direction until the prior simulated trade exits.
 Use `-ScoreThreshold 70` to force the same threshold for both long and short tests.
+
+### Run The Harness
+
+Run a quick harness check:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\Run-MorningFuturesHarness.ps1 -Mode Quick
+```
+
+Run the standard harness matrix:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\Run-MorningFuturesHarness.ps1 -Mode Standard
+```
+
+Harness summaries are written to `data/harness/latest-summary.json` and `data/harness/latest-summary.csv`.
 
 ## Notes
 
