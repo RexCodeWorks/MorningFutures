@@ -7,7 +7,7 @@ The browser version is aimed at a lightweight personal dashboard:
 - refresh on demand from the page itself
 - no always-on personal computer required
 - no Telegram or Discord setup required
-- no RSS dependency
+- no RSS dependency 
 
 It is intentionally opinionated and simple. The output is a watchlist helper, not financial advice.
 
