@@ -82,5 +82,6 @@ Use `-ScoreThreshold 70` to force the same threshold for both long and short tes
 
 - The scoring model favors liquid perpetual futures pairs.
 - The default watchlist is intentionally biased toward large and mid-cap swaps so the first refresh is less noisy.
+- Candidates are separated into `Actionable` and `Watch Only`: actionable entries meet the stricter backtested trade filter, while watch-only entries are lower-conviction setups to monitor.
 - Public APIs can rate-limit, change shape, or block browser access. If that happens, the dashboard will need endpoint or logic updates.
 - A strong score is not a guarantee. Use it as a watchlist, not as an autopilot.

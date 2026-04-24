@@ -1217,7 +1217,9 @@ function ConvertTo-Candidate {
         [pscustomobject]$Snapshot,
         [Parameter(Mandatory = $true)]
         [ValidateSet("long", "short")]
-        [string]$Direction
+        [string]$Direction,
+        [ValidateSet("actionable", "watch")]
+        [string]$SignalStatus = "actionable"
     )
 
     $score = $Snapshot.longScore
@@ -1286,6 +1288,7 @@ function ConvertTo-Candidate {
     return [pscustomobject]@{
         symbol = $Snapshot.symbol
         direction = $Direction
+        signalStatus = $SignalStatus
         biasScore = [Math]::Round($score, 1)
         edge = [Math]::Round([Math]::Abs($edge), 1)
         confidence = [Math]::Round($confidence, 0)
@@ -1358,31 +1361,45 @@ function New-MorningFuturesReport {
     $minimumShortBiasScore = 78
     $minimumShortDirectionalEdge = 14
     $maximumShortMarketRegimeScore = 0.1
-    $longQualifiedSnapshots = @(
+    $minimumLongWatchScore = 70
+    $minimumLongWatchEdge = 10
+    $minimumShortWatchScore = 72
+    $minimumShortWatchEdge = 12
+    $maximumShortWatchMarketRegimeScore = 0.2
+    $longWatchSnapshots = @(
         $snapshots |
         Sort-Object `
             @{ Expression = { $_.longEdge }; Descending = $true }, `
             @{ Expression = { $_.longScore }; Descending = $true } |
-        Where-Object { $_.longEdge -ge $minimumLongDirectionalEdge -and $_.longScore -ge $minimumLongBiasScore }
+        Where-Object { $_.longEdge -ge $minimumLongWatchEdge -and $_.longScore -ge $minimumLongWatchScore }
     )
-    $shortQualifiedSnapshots = @(
+    $shortWatchSnapshots = @(
         $snapshots |
         Sort-Object `
             @{ Expression = { $_.shortEdge }; Descending = $true }, `
             @{ Expression = { $_.shortScore }; Descending = $true } |
         Where-Object {
-            $_.shortEdge -ge $minimumShortDirectionalEdge -and
-            $_.shortScore -ge $minimumShortBiasScore -and
-            [double]$marketContext.regimeScore -le $maximumShortMarketRegimeScore
+            $_.shortEdge -ge $minimumShortWatchEdge -and
+            $_.shortScore -ge $minimumShortWatchScore -and
+            [double]$marketContext.regimeScore -le $maximumShortWatchMarketRegimeScore
         }
     )
     $longActionableSnapshots = @(
-        $longQualifiedSnapshots |
-        Where-Object { @($_.riskBlocks.long).Count -eq 0 }
+        $longWatchSnapshots |
+        Where-Object {
+            $_.longEdge -ge $minimumLongDirectionalEdge -and
+            $_.longScore -ge $minimumLongBiasScore -and
+            @($_.riskBlocks.long).Count -eq 0
+        }
     )
     $shortActionableSnapshots = @(
-        $shortQualifiedSnapshots |
-        Where-Object { @($_.riskBlocks.short).Count -eq 0 }
+        $shortWatchSnapshots |
+        Where-Object {
+            $_.shortEdge -ge $minimumShortDirectionalEdge -and
+            $_.shortScore -ge $minimumShortBiasScore -and
+            [double]$marketContext.regimeScore -le $maximumShortMarketRegimeScore -and
+            @($_.riskBlocks.short).Count -eq 0
+        }
     )
     $longSnapshots = @(
         $longActionableSnapshots |
@@ -1393,8 +1410,18 @@ function New-MorningFuturesReport {
         $shortActionableSnapshots |
         Select-Object -First $topPicks
     )
-    $blockedLongCount = @($longQualifiedSnapshots).Count - @($longActionableSnapshots).Count
-    $blockedShortCount = @($shortQualifiedSnapshots).Count - @($shortActionableSnapshots).Count
+    $longWatchOnlySnapshots = @(
+        $longWatchSnapshots |
+        Where-Object { $longSnapshots -notcontains $_ } |
+        Select-Object -First ([Math]::Max(0, $topPicks - @($longSnapshots).Count))
+    )
+    $shortWatchOnlySnapshots = @(
+        $shortWatchSnapshots |
+        Where-Object { $shortSnapshots -notcontains $_ } |
+        Select-Object -First ([Math]::Max(0, $topPicks - @($shortSnapshots).Count))
+    )
+    $blockedLongCount = @($longWatchSnapshots | Where-Object { @($_.riskBlocks.long).Count -gt 0 }).Count
+    $blockedShortCount = @($shortWatchSnapshots | Where-Object { @($_.riskBlocks.short).Count -gt 0 }).Count
 
     if ($blockedLongCount -gt 0 -or $blockedShortCount -gt 0) {
         $warnings.Add(("Risk filters removed {0} long and {1} short extended setups." -f $blockedLongCount, $blockedShortCount))
@@ -1414,8 +1441,14 @@ function New-MorningFuturesReport {
         timezone = (Get-TimeZone).Id
         isSample = $false
         marketContext = $marketContext
-        longCandidates = @($longSnapshots | ForEach-Object { ConvertTo-Candidate -Snapshot $_ -Direction "long" })
-        shortCandidates = @($shortSnapshots | ForEach-Object { ConvertTo-Candidate -Snapshot $_ -Direction "short" })
+        longCandidates = @(
+            $longSnapshots | ForEach-Object { ConvertTo-Candidate -Snapshot $_ -Direction "long" -SignalStatus "actionable" }
+            $longWatchOnlySnapshots | ForEach-Object { ConvertTo-Candidate -Snapshot $_ -Direction "long" -SignalStatus "watch" }
+        )
+        shortCandidates = @(
+            $shortSnapshots | ForEach-Object { ConvertTo-Candidate -Snapshot $_ -Direction "short" -SignalStatus "actionable" }
+            $shortWatchOnlySnapshots | ForEach-Object { ConvertTo-Candidate -Snapshot $_ -Direction "short" -SignalStatus "watch" }
+        )
         headlines = @($newsItems | Select-Object source, title, link, published, publishedLocal, sentimentLabel)
         warnings = @($warnings)
         methodology = [pscustomobject]@{
@@ -1476,7 +1509,8 @@ function Format-MorningFuturesNotification {
     $lines.Add("Long watchlist")
     $rank = 1
     foreach ($candidate in @($Report.longCandidates)) {
-        $lines.Add(("{0}. {1} | score {2} | 6h {3} | vol {4}x" -f $rank, $candidate.symbol, [Math]::Round([double]$candidate.biasScore, 0), (Format-SignedPercent -Value ([double]$candidate.move6hPct) -Digits 2), [Math]::Round([double]$candidate.volumeRatio, 2)))
+        $status = if ($candidate.signalStatus -eq "watch") { "watch only" } else { "actionable" }
+        $lines.Add(("{0}. [{1}] {2} | score {3} | 6h {4} | vol {5}x" -f $rank, $status, $candidate.symbol, [Math]::Round([double]$candidate.biasScore, 0), (Format-SignedPercent -Value ([double]$candidate.move6hPct) -Digits 2), [Math]::Round([double]$candidate.volumeRatio, 2)))
         $rank += 1
     }
 
@@ -1484,7 +1518,8 @@ function Format-MorningFuturesNotification {
     $lines.Add("Short watchlist")
     $rank = 1
     foreach ($candidate in @($Report.shortCandidates)) {
-        $lines.Add(("{0}. {1} | score {2} | 6h {3} | vol {4}x" -f $rank, $candidate.symbol, [Math]::Round([double]$candidate.biasScore, 0), (Format-SignedPercent -Value ([double]$candidate.move6hPct) -Digits 2), [Math]::Round([double]$candidate.volumeRatio, 2)))
+        $status = if ($candidate.signalStatus -eq "watch") { "watch only" } else { "actionable" }
+        $lines.Add(("{0}. [{1}] {2} | score {3} | 6h {4} | vol {5}x" -f $rank, $status, $candidate.symbol, [Math]::Round([double]$candidate.biasScore, 0), (Format-SignedPercent -Value ([double]$candidate.move6hPct) -Digits 2), [Math]::Round([double]$candidate.volumeRatio, 2)))
         $rank += 1
     }
 

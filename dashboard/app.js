@@ -92,6 +92,8 @@ window.__MORNING_FUTURES_APP_LOADED__ = true;
       chipVolume: "Volume",
       chipConfidence: "Confidence",
       chipBandWidth: "Band width",
+      chipActionable: "Actionable",
+      chipWatchOnly: "Watch Only",
       planTitle: "Simple Plan",
       planCurrentPrice: "Current Price",
       planHoldWindow: "Hold Window",
@@ -188,6 +190,8 @@ window.__MORNING_FUTURES_APP_LOADED__ = true;
       chipVolume: "거래량",
       chipConfidence: "신뢰도",
       chipBandWidth: "밴드 폭",
+      chipActionable: "진입 후보",
+      chipWatchOnly: "관심 후보",
       planTitle: "간단 계획",
       planCurrentPrice: "현재가",
       planHoldWindow: "권장 보유",
@@ -1249,7 +1253,7 @@ window.__MORNING_FUTURES_APP_LOADED__ = true;
     };
   };
 
-  const convertToCandidate = (snapshot, direction) => {
+  const convertToCandidate = (snapshot, direction, signalStatus = "actionable") => {
     const score = direction === "long" ? snapshot.longScore : snapshot.shortScore;
     const edge = direction === "long" ? snapshot.longEdge : snapshot.shortEdge;
     const reasons = direction === "long" ? snapshot.longReasons : snapshot.shortReasons;
@@ -1271,6 +1275,7 @@ window.__MORNING_FUTURES_APP_LOADED__ = true;
     return {
       symbol: snapshot.symbol,
       direction,
+      signalStatus,
       biasScore: Number(score.toFixed(1)),
       edge: Number(Math.abs(edge).toFixed(1)),
       confidence: Math.round(confidence),
@@ -1387,24 +1392,46 @@ window.__MORNING_FUTURES_APP_LOADED__ = true;
     const minimumShortBiasScore = 78;
     const minimumShortDirectionalEdge = 14;
     const maximumShortMarketRegimeScore = 0.1;
-    const longQualifiedSnapshots = [...snapshots]
+    const minimumLongWatchScore = 70;
+    const minimumLongWatchEdge = 10;
+    const minimumShortWatchScore = 72;
+    const minimumShortWatchEdge = 12;
+    const maximumShortWatchMarketRegimeScore = 0.2;
+    const longWatchSnapshots = [...snapshots]
       .sort((left, right) => (right.longEdge - left.longEdge) || (right.longScore - left.longScore))
-      .filter((snapshot) => snapshot.longEdge >= minimumLongDirectionalEdge && snapshot.longScore >= minimumLongBiasScore);
-    const shortQualifiedSnapshots = [...snapshots]
+      .filter((snapshot) => snapshot.longEdge >= minimumLongWatchEdge && snapshot.longScore >= minimumLongWatchScore);
+    const shortWatchSnapshots = [...snapshots]
       .sort((left, right) => (right.shortEdge - left.shortEdge) || (right.shortScore - left.shortScore))
+      .filter((snapshot) => (
+        snapshot.shortEdge >= minimumShortWatchEdge
+        && snapshot.shortScore >= minimumShortWatchScore
+        && marketContext.regimeScore <= maximumShortWatchMarketRegimeScore
+      ));
+    const longActionableSnapshots = longWatchSnapshots
+      .filter((snapshot) => (
+        snapshot.longEdge >= minimumLongDirectionalEdge
+        && snapshot.longScore >= minimumLongBiasScore
+        && !snapshot.riskBlocks?.long?.length
+      ));
+    const shortActionableSnapshots = shortWatchSnapshots
       .filter((snapshot) => (
         snapshot.shortEdge >= minimumShortDirectionalEdge
         && snapshot.shortScore >= minimumShortBiasScore
         && marketContext.regimeScore <= maximumShortMarketRegimeScore
+        && !snapshot.riskBlocks?.short?.length
       ));
-    const longSnapshots = longQualifiedSnapshots
-      .filter((snapshot) => !snapshot.riskBlocks?.long?.length)
+    const longSnapshots = longActionableSnapshots
       .slice(0, APP_CONFIG.topPicks);
-    const shortSnapshots = shortQualifiedSnapshots
-      .filter((snapshot) => !snapshot.riskBlocks?.short?.length)
+    const shortSnapshots = shortActionableSnapshots
       .slice(0, APP_CONFIG.topPicks);
-    const blockedLongCount = longQualifiedSnapshots.length - longQualifiedSnapshots.filter((snapshot) => !snapshot.riskBlocks?.long?.length).length;
-    const blockedShortCount = shortQualifiedSnapshots.length - shortQualifiedSnapshots.filter((snapshot) => !snapshot.riskBlocks?.short?.length).length;
+    const longWatchOnlySnapshots = longWatchSnapshots
+      .filter((snapshot) => !longSnapshots.includes(snapshot))
+      .slice(0, Math.max(0, APP_CONFIG.topPicks - longSnapshots.length));
+    const shortWatchOnlySnapshots = shortWatchSnapshots
+      .filter((snapshot) => !shortSnapshots.includes(snapshot))
+      .slice(0, Math.max(0, APP_CONFIG.topPicks - shortSnapshots.length));
+    const blockedLongCount = longWatchSnapshots.filter((snapshot) => snapshot.riskBlocks?.long?.length).length;
+    const blockedShortCount = shortWatchSnapshots.filter((snapshot) => snapshot.riskBlocks?.short?.length).length;
 
     if (blockedLongCount || blockedShortCount) {
       warnings.push(localized(
@@ -1435,8 +1462,14 @@ window.__MORNING_FUTURES_APP_LOADED__ = true;
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
       isSample: false,
       marketContext,
-      longCandidates: longSnapshots.map((snapshot) => convertToCandidate(snapshot, "long")),
-      shortCandidates: shortSnapshots.map((snapshot) => convertToCandidate(snapshot, "short")),
+      longCandidates: [
+        ...longSnapshots.map((snapshot) => convertToCandidate(snapshot, "long", "actionable")),
+        ...longWatchOnlySnapshots.map((snapshot) => convertToCandidate(snapshot, "long", "watch"))
+      ],
+      shortCandidates: [
+        ...shortSnapshots.map((snapshot) => convertToCandidate(snapshot, "short", "actionable")),
+        ...shortWatchOnlySnapshots.map((snapshot) => convertToCandidate(snapshot, "short", "watch"))
+      ],
       headlines: buildLiveSources(marketContext),
       warnings,
       disclaimer: localized(
@@ -1769,6 +1802,7 @@ window.__MORNING_FUTURES_APP_LOADED__ = true;
     const thesis = pickText(candidate.thesis);
     const invalidation = pickText(candidate.invalidation, t("reasonsFallback"));
     const bandWidthRatio = Number(candidate.chart?.widthRatio || 0);
+    const isActionable = candidate.signalStatus !== "watch";
 
     return `
       <article class="candidate">
@@ -1783,6 +1817,7 @@ window.__MORNING_FUTURES_APP_LOADED__ = true;
           </div>
         </div>
         <div class="chips">
+          <span class="chip ${isActionable ? "action-chip" : "watch-chip"}">${isActionable ? t("chipActionable") : t("chipWatchOnly")}</span>
           <span class="chip">${t("chipPrice")} ${formatPrice(candidate.lastPrice)}</span>
           <span class="chip">${t("chipMove6h")} ${formatSignedPct(candidate.move6hPct)}</span>
           <span class="chip">${t("chipMove24h")} ${formatSignedPct(candidate.move24hPct)}</span>
